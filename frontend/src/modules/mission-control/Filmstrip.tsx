@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { ImageSummary } from '../../api/types'
 import { Skeleton } from '../../design-system/primitives'
+import { shortInstrument } from '../../lib/cameras'
 import { formatSol } from '../../lib/format'
 import { groupBySol } from './grouping'
 
@@ -52,7 +53,7 @@ export function Filmstrip({ items, selectedId, onSelect, loading, total }: Films
                         title={`${item.camera.label} · sol ${item.sol}${item.lmst ? ` · ${item.lmst} LMST` : ''}`}
                       >
                         <img src={item.thumb_url} alt={`${item.camera.instrument}, sol ${item.sol}`} loading="lazy" />
-                        <span className="strip__cam mono">{item.camera.instrument.replace(/_/g, ' ')}</span>
+                        <span className="strip__cam mono">{shortInstrument(item.camera.instrument)}</span>
                       </button>
                     )
                   })}

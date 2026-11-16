@@ -153,9 +153,26 @@ todo lo que empieza por `/api` al backend (lo configura `frontend/vite.config.ts
 **La documentación interactiva del API:** abre **http://127.0.0.1:8000/docs**. Puedes ejecutar
 cada endpoint con *Try it out* y ver el JSON real.
 
-**Ampliar el archivo de imágenes** (en `backend/`):
+**En Explorer** (menú izquierdo → *Explorer*):
+- **Filtros** a la izquierda: identificador, rango de sols, fecha terrestre (UTC) y cámaras. Los
+  filtros quedan en la URL, así que puedes guardar o compartir una búsqueda y el botón *Atrás* funciona.
+- **Mission timeline** (arriba): dónde caen los sols que tienes guardados dentro de toda la misión.
+  Haz clic en una barra para filtrar ese sol.
+- Haz clic en una imagen para abrir el **visor**: rueda del ratón para hacer zoom (centrado en el
+  cursor), arrastrar para moverte, doble clic o `0` para ajustar, `1` para ver a resolución nativa.
+  *Full resolution PNG* descarga el original completo de la NASA la primera vez.
+- **← / →** (o *Earlier / Later*) recorren las imágenes en orden cronológico dentro del filtro.
+- **Inspector** (derecha): todos los metadatos, enlaces a la NASA y *Show original NASA record*,
+  que muestra el JSON original sin modificar.
+- **Stereo pair**: muchas cámaras toman imágenes izquierda y derecha a la vez. *Fetch from NASA*
+  descarga la otra mitad si la NASA la ha publicado (si no, te lo dice). *Compare* abre la
+  comparación *Side by side* (zoom sincronizado) o *Swipe* (cortinilla arrastrable).
+- **Add data from NASA** (abajo a la izquierda): elige sol y cámaras, pulsa *Check NASA* para ver
+  cuántas imágenes existen y *Download* para descargarlas en segundo plano con barra de progreso.
+
+**Ampliar el archivo de imágenes desde la terminal** (en `backend/`):
 ```powershell
-uv run mars-ingest images --sol 1200 --camera NAVCAM_LEFT --limit 20
+uv run mars-ingest images --sol 1201 --camera NAVCAM_LEFT --limit 20
 uv run mars-ingest images --sol 900 --sol-max 905 --camera MCZ_LEFT --camera MCZ_RIGHT
 uv run mars-ingest status
 ```
@@ -178,7 +195,7 @@ el registro original de la NASA, sin modificar.
 .\scripts\check.ps1 -Live  # además, 3 tests contra los servidores reales de la NASA
 ```
 
-**Qué deberías ver:** `All checks passed.` (backend: 47 tests; frontend: 28 tests).
+**Qué deberías ver:** `All checks passed.` (backend: 62 tests; frontend: 47 tests).
 
 Por separado:
 ```powershell

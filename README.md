@@ -20,9 +20,9 @@ cost maps and explainable autonomous route planning.
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Environment, repository, architecture | done |
-| 1 | Ingestion pipeline, REST API, Mission Control UI | **done** |
-| 2 | Explorer: filters, viewer, comparison, chronology | next |
-| 3 | Perception: OpenCV pipeline, obstacle candidates, segmentation | planned |
+| 1 | Ingestion pipeline, REST API, Mission Control UI | done |
+| 2 | Explorer: filters, zoom viewer, stereo pairs, comparison, chronology, UI ingestion | **done** |
+| 3 | Perception: OpenCV pipeline, obstacle candidates, segmentation | next |
 | 4 | Terrain (real 1 m DEM) + route planning (A*, Dijkstra, Theta*, RRT*) | planned |
 | 5 | Mission replay + optional AI assistant | planned |
 | 6 | Portfolio polish, E2E tests, case study | planned |
@@ -53,7 +53,7 @@ Ingest more data:
 
 ```powershell
 cd backend
-uv run mars-ingest images --sol 1200 --camera NAVCAM_LEFT --camera MCZ_LEFT --limit 30
+uv run mars-ingest images --sol 1201 --camera NAVCAM_LEFT --camera MCZ_LEFT --limit 30
 uv run mars-ingest waypoints
 uv run mars-ingest status
 ```
@@ -67,6 +67,9 @@ API documentation (OpenAPI) is served at http://127.0.0.1:8000/docs while the ba
 | NASA Mars 2020 raw-images JSON feed (`mars.nasa.gov/rss/api`) | images + metadata | undocumented; parsed defensively; ≤100 per page |
 | JPL MMGIS `M20_waypoints.json` | real rover localizations | `-9999` and mid-drive `0.0` odometry treated as missing |
 | `api.nasa.gov/mars-photos` | — | **discontinued (HTTP 404)**; not used |
+
+Feed quirks handled: a literal `|` in the query → HTTP 400; an unknown `id=` silently returns the
+generic latest list (HTTP 200); stereo partners (`NLG_…` ↔ `NRG_…`) are verified before use.
 
 Details: [docs/research/2026-11-16-data-sources-and-toolchain.md](docs/research/2026-11-16-data-sources-and-toolchain.md).
 

@@ -165,3 +165,69 @@ export interface SystemStatus {
 export interface ApiErrorBody {
   error: { code: string; message: string }
 }
+
+// ---- Contract v1.1 (Phase 2: Explorer) ---------------------------------------------------
+
+export interface Neighbors {
+  previous: ImageSummary | null
+  next: ImageSummary | null
+  /** 1-based chronological position within the filter; null if the image is outside it */
+  position: number | null
+  total: number
+}
+
+export interface StereoInfo {
+  partner_instrument: string
+  /** The id the other eye would have — unverified until `local` is set or NASA confirms it */
+  candidate_id: string
+  local: ImageSummary | null
+}
+
+export interface RelatedImages {
+  same_sequence: ImageSummary[]
+  stereo: StereoInfo | null
+  same_sol_other_cameras: ImageSummary[]
+}
+
+export interface RawRecord {
+  image_id: string
+  provenance: Provenance
+  source_url: string | null
+  record: Record<string, unknown>
+}
+
+export interface FeedAvailability {
+  sol_min: number
+  sol_max: number
+  cameras: string[]
+  published: number | null
+  stored: number
+  checked_at: IsoUtc
+  source: SourceRef
+}
+
+export type JobStatus = 'queued' | 'running' | 'success' | 'partial' | 'failed' | 'cancelled'
+
+export interface IngestJob {
+  id: string
+  status: JobStatus
+  sol_min: number
+  sol_max: number
+  cameras: string[]
+  limit: number
+  full_res: boolean
+  progress: { seen: number; added: number; skipped: number; failed: number; downloaded: number }
+  run_id: number | null
+  error: string | null
+  created_at: IsoUtc
+  started_at: IsoUtc | null
+  finished_at: IsoUtc | null
+}
+
+export interface IngestJobRequest {
+  sol_min: number
+  sol_max?: number
+  cameras: string[]
+  limit: number
+  full_res: boolean
+}

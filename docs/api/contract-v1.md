@@ -128,3 +128,58 @@ All ingested localizations (for the traverse plot), sorted by sol, site, drive:
 }
 ```
 `feed` comes from the last `latest=true` check stored during ingestion (never fetched synchronously by this endpoint).
+
+---
+
+# v1.1 additions (Phase 2: Explorer) — backwards compatible
+
+## GET /api/images — extra filters
+`date_from`, `date_to` (YYYY-MM-DD, UTC date taken, inclusive), `q` (case-insensitive substring of
+`image_id`, LIKE wildcards escaped). All filters are shared with `/neighbors`.
+
+## GET /api/images/{image_id}/neighbors
+Same filter params as `/api/images`. Chronological order = (sol, date_taken_utc, image_id) ascending.
+```jsonc
+{ "previous": ImageSummary | null, "next": ImageSummary | null,
+  "position": 12 | null,   // 1-based; null if the image is outside the filter
+  "total": 111 }
+```
+
+## GET /api/images/{image_id}/related
+```jsonc
+{
+  "same_sequence": [ImageSummary],            // same sol + sequence_id, chronological, ≤30
+  "stereo": {                                  // null for non-stereo cameras
+    "partner_instrument": "NAVCAM_RIGHT",
+    "candidate_id": "NRG_…",                   // id the other eye WOULD have — unverified
+    "local": ImageSummary | null               // present only if actually stored
+  } | null,
+  "same_sol_other_cameras": [ImageSummary]     // closest in time first, ≤8
+}
+```
+
+## GET /api/images/{image_id}/raw
+`{ "image_id", "provenance", "source_url", "record": { …original NASA record verbatim… } }`
+
+## POST /api/images/{image_id}/stereo-partner
+Fetches the candidate partner from NASA **only if published** and ingests it (small + large).
+200 `ImageSummary` · 404 `stereo_partner_not_found` · 422 `not_stereo` · 502 `upstream_unavailable`.
+Note: for an unknown id the NASA feed silently returns the generic latest list (HTTP 200); the
+backend detects this and never stores a wrong image.
+
+## GET /api/feed/availability?sol_min=&sol_max=&camera=…
+Live count from NASA (cached 10 min) vs. local count.
+`{ "sol_min", "sol_max", "cameras": [...], "published": 66 | null, "stored": 15, "checked_at", "source": SourceRef }`
+
+## Ingestion jobs (one background worker, ≤3 queued/running, in-memory progress)
+`POST /api/ingest/jobs` body `{ "sol_min": 1201, "sol_max": 1203?, "cameras": ["NAVCAM_LEFT"], "limit": 50, "full_res": false }`
+→ 202 `IngestJob`. Limits: ≤31 sols per job, `limit` 1–200, known instruments only (422 `invalid_request`);
+429 `too_many_jobs`.
+`GET /api/ingest/jobs` (newest first) · `GET /api/ingest/jobs/{id}` (404 `job_not_found`).
+```jsonc
+// IngestJob
+{ "id": "a1b2c3d4e5f6", "status": "queued|running|success|partial|failed|cancelled",
+  "sol_min": 1201, "sol_max": 1201, "cameras": ["NAVCAM_LEFT"], "limit": 50, "full_res": false,
+  "progress": { "seen": 12, "added": 10, "skipped": 2, "failed": 0, "downloaded": 20 },
+  "run_id": 7 | null, "error": null, "created_at": "…Z", "started_at": "…Z" | null, "finished_at": "…Z" | null }
+```

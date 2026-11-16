@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Explorer } from '../modules/explorer/Explorer'
 import { MissionControl } from '../modules/mission-control/MissionControl'
 import { AppShell } from './AppShell'
 import { MODULES } from './modules'
@@ -12,6 +13,8 @@ export function App() {
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<MissionControl />} />
+            <Route path="/explorer" element={<Explorer />} />
+            <Route path="/explorer/:imageId" element={<Explorer />} />
             {MODULES.filter((m) => !m.available).map((module) => (
               <Route key={module.id} path={module.path} element={<PlannedModule module={module} />} />
             ))}

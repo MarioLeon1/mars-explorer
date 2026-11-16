@@ -57,9 +57,15 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
 - Run Vitest from PowerShell (`C:\...`). From MSYS/Git Bash (`/c/...`) Vitest loads twice → every suite fails.
 - Headless Edge screenshots: `Start-Process -Wait` + a separate `--user-data-dir` (see `.claude/skills/mars-ui-design`).
 - Mid-drive MMGIS fixes report `dist_total_m = 0.0` → treated as missing.
+- Feed `id=<unknown>` returns HTTP 200 with the generic latest list (not an error) → `fetch_by_id` matches `image[].imageid`.
+- Stereo partner id = swap eye letter (`NLG_`↔`NRG_`, `ZL0_`↔`ZR0_`); not always published → verify before calling it a pair.
+- Not every sol has every camera (sol 1200: 0 Navcam, 84 others). Check `/api/feed/availability` first.
+- Background ingest: one worker thread (`ingest/jobs.py`); job state in memory, durable record in `ingest_runs`.
 
 ## Status
 - Phase 0 (env, repo, skeleton) — done 2026-11-16.
 - Phase 1 (ingest seed, API contract v1, Mission Control UI) — done 2026-11-16.
   Backend 47 tests + 3 live; frontend 28 tests; `scripts/check.ps1` green.
-- Next: Phase 2 Explorer (filters, viewer, compare, chronology).
+- Phase 2 (Explorer, contract v1.1, background ingest jobs) — done 2026-11-16.
+  Backend 62 tests + 3 live; frontend 47 tests.
+- Next: Phase 3 Perception (OpenCV pipeline, obstacle candidates, method-labelled results).

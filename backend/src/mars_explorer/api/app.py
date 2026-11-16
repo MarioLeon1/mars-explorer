@@ -16,13 +16,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from mars_explorer import __version__
-from mars_explorer.api.routers import images, meta, rover, system
+from mars_explorer.api.routers import images, ingest, meta, rover, system
 from mars_explorer.core.config import Settings, get_settings
 from mars_explorer.core.errors import AppError
 from mars_explorer.core.logging import configure_logging
 from mars_explorer.db.session import make_engine
 from mars_explorer.ingest.downloader import ImageDownloader
 from mars_explorer.ingest.http import make_http_client
+from mars_explorer.ingest.jobs import JobManager
 
 log = logging.getLogger(__name__)
 
@@ -44,8 +45,10 @@ def create_app(
         app.state.engine = make_engine(settings.database_path)
         app.state.http = make_http_client(settings, transport=transport)
         app.state.downloader = ImageDownloader(app.state.http, settings)
+        app.state.jobs = JobManager(app.state.engine, settings, transport=transport)
         log.info("Mars Explorer API %s — data dir %s", __version__, settings.data_dir)
         yield
+        app.state.jobs.shutdown()
         app.state.http.close()
         app.state.engine.dispose()
 
@@ -58,7 +61,7 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
 
@@ -72,7 +75,7 @@ def create_app(
         where = ".".join(str(p) for p in first.get("loc", []))
         return _error(422, "invalid_request", f"{where}: {first.get('msg', 'invalid request')}")
 
-    for router in (meta.router, images.router, rover.router, system.router):
+    for router in (meta.router, images.router, ingest.router, rover.router, system.router):
         app.include_router(router, prefix="/api")
     return app
 

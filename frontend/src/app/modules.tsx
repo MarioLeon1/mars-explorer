@@ -40,14 +40,9 @@ export const MODULES: ModuleDef[] = [
     short: 'Explorer',
     icon: <IconExplorer />,
     phase: 2,
-    available: false,
+    available: true,
     description: 'Browse, filter and compare real Perseverance images with full provenance.',
-    plan: [
-      'Filter by camera, sol and Earth date; search the local archive',
-      'Full-resolution viewer with zoom and metadata inspector',
-      'Side-by-side comparison of related frames (stereo pairs, repeat imaging)',
-      'Chronological navigation across sols, and on-demand ingestion of new sols',
-    ],
+    plan: [],
   },
   {
     id: 'perception',

@@ -44,6 +44,12 @@ class FakeNasa:
 
     def __init__(self) -> None:
         self.records = all_feed_records()
+        pair = load_fixture("stereo_pair_navcam_sol2022.json")
+        self.stereo_left: dict[str, Any] = pair["left"]
+        self.stereo_right: dict[str, Any] = pair["right"]
+        self.by_id: dict[str, dict[str, Any]] = {
+            r["imageid"]: r for r in [*self.records, self.stereo_left, self.stereo_right]
+        }
         self.requests: list[httpx.Request] = []
         self.fail_files = False
         self.feed_status = 200
@@ -69,6 +75,13 @@ class FakeNasa:
         params = request.url.params
         if params.get("latest") == "true":
             return httpx.Response(200, json=load_fixture("raw_images_latest.json"))
+        if "id" in params:
+            record = self.by_id.get(params["id"])
+            if record is not None:
+                return httpx.Response(200, json={"image": [record], "type": "detail"})
+            # Real behaviour (captured): an unpublished id is ignored and the generic
+            # latest-images list comes back with HTTP 200.
+            return httpx.Response(200, json=load_fixture("raw_image_detail_unpublished_id.json"))
         records = self.records
         if "search" in params:
             wanted = set(params["search"].strip("|").split("|"))

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { ImageDetail, ImageSummary } from '../../api/types'
 import { IconExternal } from '../../design-system/icons'
 import { ProvenanceBadge } from '../../design-system/ProvenanceBadge'
@@ -77,6 +78,10 @@ export function ImageViewport({ summary, detail, loading, position, onStep }: Im
                   <dd>{summary.width && summary.height ? `${summary.width}×${summary.height}` : '—'}</dd>
                 </div>
               </dl>
+              <div className="viewport__links">
+              <Link className="viewport__link" to={`/explorer/${encodeURIComponent(summary.image_id)}`}>
+                Open in Explorer
+              </Link>
               {matchingDetail?.source.nasa_page_url && (
                 <a
                   className="viewport__link"
@@ -87,6 +92,7 @@ export function ImageViewport({ summary, detail, loading, position, onStep }: Im
                   View on NASA <IconExternal />
                 </a>
               )}
+              </div>
             </div>
           </>
         )}

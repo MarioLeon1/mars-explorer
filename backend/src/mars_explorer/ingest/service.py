@@ -31,6 +31,10 @@ log = logging.getLogger(__name__)
 Progress = Callable[[str], None]
 
 
+class IngestCancelled(Exception):
+    """Raised by an observer to stop a run early (e.g. on server shutdown)."""
+
+
 @dataclass(frozen=True, slots=True)
 class ImageSelection:
     """A slice of the feed: a sol range, optional instruments and a max number of records."""
@@ -50,6 +54,7 @@ class RunTotals:
     files_downloaded: int = 0
     files_skipped: int = 0
     errors: list[str] = field(default_factory=list)
+    stored_ids: list[str] = field(default_factory=list)
 
     @property
     def status(self) -> str:
@@ -83,7 +88,10 @@ class IngestService:
         selections: Iterable[ImageSelection],
         sizes: Sequence[ImageSize] = ("small", "large"),
         kind: str = "images",
+        observer: Callable[[RunTotals], None] | None = None,
     ) -> IngestRun:
+        """Ingest feed slices. ``observer`` sees the running totals after every record and may
+        raise :class:`IngestCancelled` to stop; the run is then finished as partial/failed."""
         selections = list(selections)
         params = {
             "selections": [
@@ -101,13 +109,46 @@ class IngestService:
         run = self._start_run(kind, params)
         try:
             for selection in selections:
-                self._ingest_selection(selection, sizes, totals)
+                self._ingest_selection(selection, sizes, totals, observer)
             self._refresh_feed_status(totals)
         except AppError as exc:
             totals.items_failed += 1
             totals.errors.append(exc.message)
             log.error("ingest aborted: %s", exc.message)
+        except IngestCancelled:
+            totals.items_failed += 1
+            totals.errors.append("cancelled before completion")
+            log.warning("ingest cancelled")
+        except Exception as exc:
+            # Never leave a run stuck in "running": close it, then let the caller see the bug.
+            totals.items_failed += 1
+            totals.errors.append(f"unexpected error: {exc!r}")
+            self._finish_run(run, totals)
+            raise
         return self._finish_run(run, totals)
+
+    def ingest_image_ids(
+        self,
+        image_ids: Sequence[str],
+        sizes: Sequence[ImageSize] = ("small", "large"),
+        kind: str = "image_ids",
+    ) -> tuple[IngestRun, RunTotals]:
+        """Fetch specific products by id. Ids NASA has not published are reported, not invented."""
+        totals = RunTotals()
+        run = self._start_run(kind, {"image_ids": list(image_ids), "sizes": list(sizes)})
+        try:
+            for image_id in image_ids:
+                totals.items_seen += 1
+                raw = self._feed.fetch_by_id(image_id)
+                if raw is None:
+                    totals.items_failed += 1
+                    totals.errors.append(f"{image_id}: not published in the NASA feed")
+                    continue
+                self._store_record(raw, sizes, totals)
+        except AppError as exc:
+            totals.items_failed += 1
+            totals.errors.append(exc.message)
+        return self._finish_run(run, totals), totals
 
     def ingest_waypoints(self) -> IngestRun:
         totals = RunTotals()
@@ -118,12 +159,21 @@ class IngestService:
             totals.items_failed += 1
             totals.errors.append(exc.message)
             log.error("waypoint ingest failed: %s", exc.message)
+        except Exception as exc:
+            totals.items_failed += 1
+            totals.errors.append(f"unexpected error: {exc!r}")
+            self._finish_run(run, totals)
+            raise
         return self._finish_run(run, totals)
 
     # ---- internals ---------------------------------------------------------------------
 
     def _ingest_selection(
-        self, selection: ImageSelection, sizes: Sequence[ImageSize], totals: RunTotals
+        self,
+        selection: ImageSelection,
+        sizes: Sequence[ImageSize],
+        totals: RunTotals,
+        observer: Callable[[RunTotals], None] | None = None,
     ) -> None:
         label = "/".join(selection.instruments) or "all cameras"
         span = (
@@ -138,35 +188,44 @@ class IngestService:
         )
         for raw in self._feed.iter_images(query, limit=selection.limit):
             totals.items_seen += 1
-            try:
-                parsed = parse_raw_image(raw)
-            except ParseError as exc:
-                totals.items_failed += 1
-                totals.errors.append(str(exc))
-                continue
-            if parsed.is_thumbnail:
+            self._store_record(raw, sizes, totals)
+            if observer is not None:
+                observer(totals)
+
+    def _store_record(
+        self, raw: dict[str, object], sizes: Sequence[ImageSize], totals: RunTotals
+    ) -> None:
+        """Parse, upsert and cache one feed record, updating ``totals``."""
+        try:
+            parsed = parse_raw_image(raw)
+        except ParseError as exc:
+            totals.items_failed += 1
+            totals.errors.append(str(exc))
+            return
+        if parsed.is_thumbnail:
+            totals.items_skipped += 1
+            return
+        with Session(self._engine) as session:
+            record = session.get(ImageRecord, parsed.image_id)
+            if record is None:
+                record = ImageRecord(**parsed.model_dump())
+                session.add(record)
+                session.commit()
+                session.refresh(record)
+                totals.items_added += 1
+            else:
                 totals.items_skipped += 1
-                continue
-            with Session(self._engine) as session:
-                record = session.get(ImageRecord, parsed.image_id)
-                if record is None:
-                    record = ImageRecord(**parsed.model_dump())
-                    session.add(record)
-                    session.commit()
-                    session.refresh(record)
-                    totals.items_added += 1
+            totals.stored_ids.append(record.image_id)
+            self._downloader.write_metadata(record)
+            for size in sizes:
+                result = self._downloader.ensure(session, record, size)
+                if result.status == "downloaded":
+                    totals.files_downloaded += 1
+                elif result.status == "skipped":
+                    totals.files_skipped += 1
                 else:
-                    totals.items_skipped += 1
-                self._downloader.write_metadata(record)
-                for size in sizes:
-                    result = self._downloader.ensure(session, record, size)
-                    if result.status == "downloaded":
-                        totals.files_downloaded += 1
-                    elif result.status == "skipped":
-                        totals.files_skipped += 1
-                    else:
-                        totals.items_failed += 1
-                        totals.errors.append(f"{record.image_id}/{size}: {result.error}")
+                    totals.items_failed += 1
+                    totals.errors.append(f"{record.image_id}/{size}: {result.error}")
 
     def _ingest_waypoints(self, totals: RunTotals) -> None:
         self._progress("rover localizations (JPL MMGIS)")

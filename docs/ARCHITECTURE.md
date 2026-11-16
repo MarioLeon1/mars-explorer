@@ -39,6 +39,23 @@ frontend (React/TS) ──HTTP /api──▶ backend (FastAPI)
 4. Waypoints are fetched from JPL MMGIS and replace the table wholesale (the source is authoritative).
 5. The API serves metadata from SQLite and files from the cache, fetching missing files on demand.
 
+## Background ingestion (Phase 2)
+
+The UI can download new sols. `POST /api/ingest/jobs` queues a job on a **single worker thread**
+(`ingest/jobs.py`): one at a time keeps NASA requests polite and respects SQLite's single writer.
+Progress lives in memory and is polled by the UI; the durable record is the `ingest_runs` row.
+On shutdown, queued jobs are cancelled and a running job stops after the current image (the run
+is still closed). Any unexpected exception closes the run as `failed` instead of leaving it `running`.
+A dedicated task queue (Celery/RQ + Redis) was rejected: it adds two services for a local, single-user app.
+
+## Explorer design notes
+
+- Filters live in the URL (same keys as the API) → shareable views and working Back button.
+- Chronology = (sol, time taken, id), defined once in `api/filters.py` and reused by list and neighbours.
+- The zoom viewer stores a **normalised** view (zoom relative to fit + centre as image fraction), so
+  the preview JPEG, the full PNG and two compared images stay aligned.
+- Stereo partners are derived from the product id but only shown as a pair once verified.
+
 ## Scientific integrity in code
 
 - `Provenance` enum on every API object; the UI renders it as a badge (simulated data is

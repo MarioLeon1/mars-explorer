@@ -31,3 +31,8 @@ class UpstreamError(AppError):
 class NoDataError(AppError):
     status_code = 503
     code = "no_data"
+
+
+class InvalidRequestError(AppError):
+    status_code = 422
+    code = "invalid_request"

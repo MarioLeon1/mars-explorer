@@ -70,3 +70,30 @@ def camera_info(instrument: str) -> CameraInfo:
     if known is not None:
         return known
     return CameraInfo(instrument, CameraGroup.OTHER, instrument.replace("_", " ").title())
+
+
+# Stereo pairs: left and right eyes are commanded together (verified 2026-11-16: matching
+# product ids differ only in the eye letter, and SCLK differs by < 2 s).
+_STEREO_PAIRS: tuple[tuple[str, str], ...] = (
+    ("NAVCAM_LEFT", "NAVCAM_RIGHT"),
+    ("FRONT_HAZCAM_LEFT_A", "FRONT_HAZCAM_RIGHT_A"),
+    ("FRONT_HAZCAM_LEFT_B", "FRONT_HAZCAM_RIGHT_B"),
+    ("REAR_HAZCAM_LEFT", "REAR_HAZCAM_RIGHT"),
+    ("MCZ_LEFT", "MCZ_RIGHT"),
+)
+STEREO_PARTNER: dict[str, str] = {
+    **{left: right for left, right in _STEREO_PAIRS},
+    **{right: left for left, right in _STEREO_PAIRS},
+}
+
+
+def stereo_candidate_id(image_id: str, instrument: str) -> str | None:
+    """Product id the other eye would have, e.g. ``NLG_...`` -> ``NRG_...``.
+
+    A candidate only: Mastcam-Z narrow-band filters often have no partner with the same id,
+    so callers must confirm it exists (locally or in the NASA feed) before calling it a pair.
+    """
+    if instrument not in STEREO_PARTNER or len(image_id) < 2 or image_id[1] not in "LR":
+        return None
+    other = "R" if image_id[1] == "L" else "L"
+    return image_id[0] + other + image_id[2:]

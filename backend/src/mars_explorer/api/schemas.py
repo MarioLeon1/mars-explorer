@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, PlainSerializer
+from pydantic import BaseModel, Field, PlainSerializer
 
 from mars_explorer.core.provenance import Provenance
 from mars_explorer.db.models import as_utc
@@ -207,3 +207,74 @@ class SystemStatus(ApiModel):
     storage: StorageStats
     last_ingest: LastIngest | None
     feed: FeedState | None
+
+
+# ---- Contract v1.1 (Phase 2: Explorer) ------------------------------------------------------
+
+
+class Neighbors(ApiModel):
+    previous: ImageSummary | None
+    next: ImageSummary | None
+    position: int | None  # 1-based position in chronological order within the filter
+    total: int
+
+
+class StereoInfo(ApiModel):
+    partner_instrument: str
+    candidate_id: str
+    local: ImageSummary | None
+
+
+class RelatedImages(ApiModel):
+    same_sequence: list[ImageSummary]
+    stereo: StereoInfo | None
+    same_sol_other_cameras: list[ImageSummary]
+
+
+class RawRecord(ApiModel):
+    image_id: str
+    provenance: Provenance
+    source_url: str | None
+    record: dict[str, Any]
+
+
+class FeedAvailability(ApiModel):
+    sol_min: int
+    sol_max: int
+    cameras: list[str]
+    published: int | None
+    stored: int
+    checked_at: UtcDateTime
+    source: SourceRef
+
+
+class IngestJobRequest(BaseModel):
+    sol_min: int = Field(ge=0)
+    sol_max: int | None = Field(default=None, ge=0)
+    cameras: list[str] = Field(default_factory=list, max_length=12)
+    limit: int = Field(default=50, ge=1, le=200)
+    full_res: bool = False
+
+
+class JobProgress(ApiModel):
+    seen: int
+    added: int
+    skipped: int
+    failed: int
+    downloaded: int
+
+
+class IngestJob(ApiModel):
+    id: str
+    status: Literal["queued", "running", "success", "partial", "failed", "cancelled"]
+    sol_min: int
+    sol_max: int
+    cameras: list[str]
+    limit: int
+    full_res: bool
+    progress: JobProgress
+    run_id: int | None
+    error: str | None
+    created_at: UtcDateTime
+    started_at: UtcDateTime | None
+    finished_at: UtcDateTime | None

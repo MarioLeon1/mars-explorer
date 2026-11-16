@@ -137,3 +137,25 @@ class RawImagesClient:
             latest_sol=latest_sol if isinstance(latest_sol, int) else None,
             total_images=total if isinstance(total, int) else None,
         )
+
+    def count(self, query: FeedQuery) -> int | None:
+        """Number of Full-sample records NASA publishes for ``query`` (one cheap request)."""
+        params = build_params(
+            FeedQuery(query.sol_min, query.sol_max, query.instruments, query.order, page_size=1),
+            page=0,
+        )
+        total = self._get_json(params).get("total_results")
+        return total if isinstance(total, int) else None
+
+    def fetch_by_id(self, image_id: str) -> dict[str, Any] | None:
+        """The feed record for one product id, or None if NASA has not published it."""
+        payload = self._get_json(
+            {"feed": "raw_images", "category": "mars2020", "feedtype": "json", "id": image_id}
+        )
+        images = payload.get("image")
+        if not isinstance(images, list):
+            return None
+        for record in images:
+            if isinstance(record, dict) and record.get("imageid") == image_id:
+                return record
+        return None

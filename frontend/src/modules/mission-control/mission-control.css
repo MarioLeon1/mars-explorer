@@ -710,3 +710,8 @@
     flex-direction: column;
   }
 }
+
+.viewport__links {
+  display: flex;
+  gap: var(--s-4);
+}
