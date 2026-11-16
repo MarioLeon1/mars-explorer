@@ -1,0 +1,198 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  grid-template-rows: var(--topbar-h) minmax(0, 1fr) var(--footer-h);
+  grid-template-areas:
+    'top top'
+    'rail main'
+    'foot foot';
+  height: 100vh;
+  min-height: 600px;
+}
+
+/* ---- Top bar ------------------------------------------------------------------ */
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  padding: 0 var(--s-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-0);
+  min-width: 0;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}
+
+.topbar__wordmark {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+}
+
+.topbar__mission {
+  padding-left: var(--s-6);
+  border-left: 1px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-1);
+}
+
+.topbar__readouts {
+  display: flex;
+  gap: var(--s-6);
+  margin: 0 0 0 auto;
+}
+
+.topbar__readouts div {
+  display: grid;
+  gap: 1px;
+}
+
+.topbar__readouts dt {
+  font-size: 10px;
+}
+
+.topbar__readouts dd {
+  margin: 0;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.topbar__pips {
+  display: flex;
+  gap: var(--s-4);
+  padding-left: var(--s-6);
+  border-left: 1px solid var(--line);
+  flex: none;
+}
+
+/* ---- Rail --------------------------------------------------------------------- */
+.rail {
+  grid-area: rail;
+  border-right: 1px solid var(--line);
+  background: var(--bg-0);
+  padding: var(--s-2) 0;
+  overflow-y: auto;
+}
+
+.rail ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.rail__link {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  color: var(--text-2);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--motion), background var(--motion);
+}
+
+.rail__link:hover {
+  color: var(--text-0);
+  background: var(--bg-1);
+  text-decoration: none;
+}
+
+.rail__link.is-active {
+  color: var(--text-0);
+  background: var(--bg-1);
+}
+
+.rail__link.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--accent);
+}
+
+.rail__link.is-planned svg {
+  opacity: 0.55;
+}
+
+/* ---- Workspace / footer -------------------------------------------------------- */
+.workspace {
+  grid-area: main;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--s-3);
+}
+
+.statusline {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: 0 var(--s-4);
+  border-top: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: var(--fs-label);
+  background: var(--bg-0);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ---- Planned module page --------------------------------------------------------- */
+.planned {
+  max-width: 720px;
+}
+
+.planned__phase {
+  color: var(--accent);
+  font-size: var(--fs-label);
+}
+
+.planned__lead {
+  font-size: var(--fs-title);
+  color: var(--text-0);
+  margin-bottom: var(--s-4);
+}
+
+.planned__status {
+  color: var(--text-1);
+  margin-bottom: var(--s-2);
+}
+
+.planned__list {
+  margin: 0;
+  padding-left: var(--s-5);
+  color: var(--text-1);
+  display: grid;
+  gap: var(--s-1);
+}
+
+@media (max-width: 1180px) {
+  .topbar__mission {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar__readouts {
+    display: none;
+  }
+  .topbar__pips {
+    margin-left: auto;
+  }
+}

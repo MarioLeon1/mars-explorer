@@ -1,0 +1,62 @@
+/* Mars Explorer design tokens — dark flight-operations console.
+   Accent (Mars oxide) is used sparingly; signal (cyan) only for selection / live data. */
+:root {
+  color-scheme: dark;
+
+  /* surfaces */
+  --bg-0: #0b0c0e;
+  --bg-1: #111316;
+  --bg-2: #171a1e;
+  --bg-3: #1d2126;
+  --bg-image: #050506;
+
+  /* lines */
+  --line: #23272d;
+  --line-strong: #2f353d;
+
+  /* text */
+  --text-0: #e8e6e1;
+  --text-1: #a9adb3;
+  --text-2: #6c727a;
+
+  /* roles */
+  --accent: #d9663a;
+  --accent-dim: #8a3f22;
+  --accent-wash: rgb(217 102 58 / 0.12);
+  --signal: #5cc8d6;
+  --signal-wash: rgb(92 200 214 / 0.12);
+  --ok: #5fbf7a;
+  --warn: #e0b341;
+  --danger: #e5534b;
+  --simulated: #b48cf2;
+
+  /* type */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --fs-label: 11px;
+  --fs-small: 12px;
+  --fs-body: 13px;
+  --fs-title: 15px;
+  --fs-display: 22px;
+  --tracking-label: 0.08em;
+
+  /* spacing (4px grid) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+
+  --radius: 3px;
+  --topbar-h: 48px;
+  --rail-w: 76px;
+  --footer-h: 28px;
+  --motion: 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion: 0ms linear;
+  }
+}

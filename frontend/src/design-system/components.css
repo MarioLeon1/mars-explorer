@@ -1,0 +1,272 @@
+/* ---- Panel ---------------------------------------------------------------- */
+.ds-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.ds-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 34px;
+  padding: 0 var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.ds-panel__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-2);
+  font-size: var(--fs-small);
+  min-width: 0;
+}
+
+.ds-panel__body {
+  padding: var(--s-3);
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.ds-panel__body--scroll {
+  overflow-y: auto;
+}
+
+.ds-panel__body--flush {
+  padding: 0;
+}
+
+.ds-panel__footer {
+  padding: var(--s-2) var(--s-3);
+  border-top: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: var(--fs-small);
+}
+
+/* ---- Provenance badge ------------------------------------------------------ */
+.ds-prov {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--text-1);
+  background: var(--bg-1);
+  max-width: 100%;
+}
+
+.ds-prov__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.ds-prov__kind {
+  font-weight: 600;
+  color: var(--text-0);
+}
+
+.ds-prov__credit {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-prov--real_observation .ds-prov__dot {
+  background: var(--signal);
+}
+
+.ds-prov--derived {
+  border-color: rgb(224 179 65 / 0.5);
+}
+
+.ds-prov--derived .ds-prov__dot {
+  background: var(--warn);
+}
+
+.ds-prov--simulated {
+  border: 1px dashed var(--simulated);
+  color: var(--simulated);
+  background: repeating-linear-gradient(
+    135deg,
+    rgb(180 140 242 / 0.08) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+.ds-prov--simulated .ds-prov__kind {
+  color: var(--simulated);
+}
+
+.ds-prov--simulated .ds-prov__dot {
+  background: var(--simulated);
+}
+
+.ds-prov--user_generated .ds-prov__dot {
+  background: var(--text-2);
+}
+
+/* ---- Status pip ------------------------------------------------------------- */
+.ds-pip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.ds-pip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-2);
+}
+
+.ds-pip__dot--ok {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgb(95 191 122 / 0.15);
+}
+
+.ds-pip__dot--warn {
+  background: var(--warn);
+}
+
+.ds-pip__dot--error {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px rgb(229 83 75 / 0.15);
+}
+
+/* ---- Data list -------------------------------------------------------------- */
+.ds-data {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.ds-data--cols-2 {
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--s-4);
+}
+
+.ds-data__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.ds-data__row:last-child,
+.ds-data--cols-2 .ds-data__row:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+}
+
+.ds-data__row dt {
+  flex: none;
+}
+
+.ds-data__row dd {
+  margin: 0;
+  color: var(--text-0);
+  font-size: var(--fs-small);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ---- Skeleton / states ------------------------------------------------------ */
+.ds-skeleton {
+  display: block;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--bg-2) 0%, var(--bg-3) 50%, var(--bg-2) 100%);
+  background-size: 200% 100%;
+  animation: ds-shimmer 1.4s ease-in-out infinite;
+}
+
+.ds-skeleton-block {
+  display: grid;
+  gap: var(--s-2);
+}
+
+@keyframes ds-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-skeleton {
+    animation: none;
+  }
+}
+
+.ds-state {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: start;
+  padding: var(--s-2) 0;
+  color: var(--text-1);
+  font-size: var(--fs-small);
+}
+
+.ds-state__title {
+  color: var(--text-0);
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+.ds-state--error .ds-state__title {
+  color: var(--danger);
+}
+
+.ds-state__message {
+  max-width: 52ch;
+}
+
+.ds-command {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-size: var(--fs-small);
+  user-select: all;
+}
+
+.ds-button {
+  height: 28px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: var(--text-0);
+  font-size: var(--fs-small);
+  cursor: pointer;
+  transition: border-color var(--motion), background var(--motion);
+}
+
+.ds-button:hover {
+  border-color: var(--text-2);
+  background: var(--bg-3);
+}
