@@ -198,6 +198,18 @@ cada endpoint con *Try it out* y ver el JSON real.
   Verás la tabla comparativa, el perfil de elevación (pasa el ratón) y *Why this route*.
 - *Assumptions and limitations*: qué supone el modelo y qué no puede ver (rocas < 1 m).
 
+**Path sketch (ruta sobre una imagen)** — en *Vision*, abre una imagen y pulsa la pestaña
+**Path sketch** (arriba a la derecha):
+1. Pulsa **Set goal (B)** y haz clic en el suelo de la imagen (o pulsa **Goal at centre**).
+2. La línea cian es el camino que esquiva las *rock candidates* (círculos rojos; el discontinuo es
+   la zona de seguridad). La línea punteada blanca es la recta A→B, para comparar.
+3. Ajusta **Clearance** (cuánto margen dejar), **Roughness weight** (cuánto evitar zonas rugosas) y
+   el **detector**, y pulsa **Plan path**. Con **Set start (A)** cambias el punto de salida (útil en
+   Hazcam, donde abajo salen las ruedas del rover).
+4. A la derecha: longitud, desvío y *Why this path*. Todo está en **píxeles**: es una ilustración
+   sobre la imagen, no una ruta real (el rover planifica en 3D con pares estéreo).
+Funciona mejor con imágenes **Navcam** que miran al suelo.
+
 **En Replay** (menú izquierdo → *Replay*):
 - **Mission timeline** (arriba): distancia real conducida en cada sol (barras) y, debajo, una
   marca por cada sol con imágenes guardadas. Pasa el ratón para ver detalles; haz clic para abrir ese sol.
@@ -249,7 +261,12 @@ el registro original de la NASA, sin modificar.
 .\scripts\check.ps1 -Live  # además, 4 tests contra los servidores reales de la NASA
 ```
 
-**Qué deberías ver:** `All checks passed.` (backend: 175 tests; frontend: 79 tests).
+**Qué deberías ver:** `All checks passed.` (backend: 187 tests; frontend: 83 tests).
+
+**Pruebas de extremo a extremo (navegador real):** `.\scripts\check.ps1 -E2E` abre Microsoft Edge
+en segundo plano, arranca una copia aislada de la app (puertos 8100 y 5180, con datos de prueba
+propios, sin tocar tu carpeta `data/`) y recorre todas las secciones, además de una auditoría de
+accesibilidad. Deberías ver `14 passed`. No hace falta cerrar `dev.ps1`: usa otros puertos.
 
 Por separado:
 ```powershell

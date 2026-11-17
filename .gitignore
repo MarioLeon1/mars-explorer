@@ -36,3 +36,8 @@ Thumbs.db
 *.log
 logs/
 artifacts/
+
+# --- E2E (Playwright) ---
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/.data/

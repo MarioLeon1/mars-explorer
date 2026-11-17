@@ -32,6 +32,7 @@ from mars_explorer.vision.evaluation import MatchCounts, Point, agreement, match
 from mars_explorer.vision.features import disparity_stats, match_images
 from mars_explorer.vision.methods import METHODS, MethodOutput, get_method
 from mars_explorer.vision.ops import Gray, load_gray
+from mars_explorer.vision.pathsketch import PathSketch, SketchParams, sketch_path
 
 log = logging.getLogger(__name__)
 
@@ -185,6 +186,19 @@ class VisionService:
             session.refresh(record)
         log.info("vision %s on %s: %s ms", method, image_id, output.timings_ms)
         return record
+
+    def path_sketch(
+        self,
+        image_id: str,
+        goal: tuple[float, float],
+        start: tuple[float, float] | None,
+        params: SketchParams,
+        rendition: ImageSize = "large",
+    ) -> PathSketch:
+        """Image-space path around rock candidates (derived, illustrative; see pathsketch)."""
+        with Session(self._engine) as session:
+            gray = self._load(session, image_id, rendition)
+        return sketch_path(gray, goal, start, params)
 
     def get(self, analysis: str) -> VisionAnalysis:
         with Session(self._engine) as session:

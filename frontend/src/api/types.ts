@@ -663,3 +663,58 @@ export interface ChatResponse {
   label: 'ai_generated'
   provenance: Provenance
 }
+
+// ---- Contract v1.5 (Phase 6: image-space path sketch) -------------------------------------
+
+export interface FracPoint {
+  x: number
+  y: number
+}
+
+export type SketchDetector = 'blobs' | 'contours'
+
+export interface PathSketchRequest {
+  image_id: string
+  goal: FracPoint
+  start?: FracPoint
+  detector: SketchDetector
+  clearance: number
+  roughness_weight: number
+  /** null = estimate automatically */
+  horizon: number | null
+}
+
+export interface PathSketch {
+  image_id: string
+  width: number
+  height: number
+  found: boolean
+  reason: string | null
+  /** [[x, y]] in pixels of the analysed image (width × height) */
+  path: [number, number][]
+  start: [number, number]
+  goal: [number, number]
+  horizon: number
+  horizon_auto: boolean
+  detector: SketchDetector
+  obstacles: { x: number; y: number; r: number }[]
+  /** data: URL of the cost grid, to stretch over the image */
+  cost_layer: string
+  metrics: {
+    length_px: number
+    straight_px: number
+    detour_pct: number | null
+    min_clearance_px: number | null
+    obstacles: number
+    blocking_straight_line: number
+    grid: [number, number]
+    cell_px: number
+    elapsed_ms: number
+  }
+  explanation: string[]
+  assumptions: string[]
+  limitations: string[]
+  kind: 'image_space_sketch'
+  method: 'algorithmic'
+  provenance: Provenance
+}

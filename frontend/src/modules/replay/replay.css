@@ -414,6 +414,10 @@
   background: var(--signal-wash);
 }
 
+.rp-seq.is-active .rp-seq__meta {
+  color: var(--text-1); /* --text-2 is below 4.5:1 on the cyan wash */
+}
+
 .rp-seq img {
   flex: none;
   object-fit: cover;

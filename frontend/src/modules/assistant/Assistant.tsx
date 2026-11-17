@@ -45,6 +45,11 @@ function SetupGuide({ status }: { status: AssistantStatus }) {
             <li key={step}>{step}</li>
           ))}
         </ol>
+        <p>
+          <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noreferrer">
+            Open the Claude Console (API keys) ↗
+          </a>
+        </p>
         <p className="as-muted">In the .env file (project root) the line looks like this:</p>
         <CommandHint command="ANTHROPIC_API_KEY=sk-ant-..." />
         <p className="as-muted">

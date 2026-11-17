@@ -587,3 +587,168 @@
     min-height: 420px;
   }
 }
+
+/* ---- path sketch (image space) ------------------------------------------------------------ */
+
+.pw__body.ps {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+.ps__cost {
+  image-rendering: pixelated;
+  opacity: 0.7;
+}
+
+.ps__horizon {
+  stroke: var(--text-1);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.ps__obstacle {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.ps__inflated {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.ps__straight {
+  stroke: var(--text-0);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 6;
+  opacity: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.ps__path {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ps__marker circle {
+  fill: var(--bg-0);
+  stroke: var(--signal);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.ps__marker text {
+  fill: var(--text-0);
+  font-family: var(--font-mono);
+  text-anchor: middle;
+}
+
+.ps__marker--goal circle {
+  fill: var(--signal);
+}
+
+.ps__marker--goal text {
+  fill: var(--bg-0);
+}
+
+.ps__stamp {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  padding: 2px var(--s-2);
+  border: 1px dashed var(--warn);
+  border-radius: 2px;
+  background: var(--bg-0);
+  color: var(--warn);
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  pointer-events: none;
+}
+
+.ps__hint {
+  margin-left: auto;
+  color: var(--text-2);
+  font-size: var(--fs-small);
+}
+
+.ps__picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.ps__picks .is-active {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.ps__note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--fs-small);
+}
+
+.ps__field {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.ps__field select {
+  height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: var(--text-0);
+}
+
+.ps__field input[type='range'] {
+  accent-color: var(--signal);
+}
+
+.ps__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.ps__method {
+  padding: 1px var(--s-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  color: var(--text-1);
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.ps__sub {
+  margin: var(--s-2) 0 0;
+}
+
+.ps__list {
+  margin: 0;
+  padding-left: var(--s-4);
+  color: var(--text-1);
+  font-size: var(--fs-small);
+  display: grid;
+  gap: var(--s-1);
+}
+
+.ps__list--warn {
+  margin-top: var(--s-2);
+  color: var(--text-2);
+}
+
+.ps__details summary {
+  cursor: pointer;
+  margin-bottom: var(--s-2);
+}

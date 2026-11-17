@@ -250,3 +250,14 @@ Metrics: `length_m, impassable_m, cost (null if blocked), cost_distance/slope/ro
 | POST | `/api/assistant/chat` | `{messages: [{role, content}] (1–40, last = user), context?: {page, sol, image_id}}` → `{reply, model, stop_reason, refused, fallback_used, rounds, tool_calls, usage, notes, label: "ai_generated", provenance: "derived"}`; `503 assistant_disabled` without a key; 502/429 `assistant_*` upstream errors |
 
 Sequence `kind`: `fixed_pointing | pointing_sweep | vehicle_fixed | single_exposure | unclassified`.
+
+---
+
+# v1.5 additions (Phase 6: image-space path sketch) — backwards compatible
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/vision/path-sketch` | `{image_id, goal: {x, y}, start?: {x, y}, detector: "blobs"\|"contours", clearance 1–4 (1.6), roughness_weight 0–10 (2), horizon: null (auto) \| 0–0.75, rendition}` (points are fractions of width/height) → `{width, height, found, reason, path [[x, y]] px, start, goal, horizon, horizon_auto, obstacles [{x, y, r}], cost_layer (PNG data URL at grid resolution), metrics {length_px, straight_px, detour_pct, min_clearance_px, obstacles, blocking_straight_line, grid, cell_px, elapsed_ms}, explanation, assumptions, limitations, kind: "image_space_sketch", method: "algorithmic", provenance: "derived"}`; 404 unknown image, 422 invalid parameters |
+
+All lengths are image pixels. The result is an illustration of hazard avoidance on one image,
+never a metric or drivable route.

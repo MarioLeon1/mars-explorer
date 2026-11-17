@@ -1,10 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { ModuleErrorBoundary } from './ModuleErrorBoundary'
 import { MODULES } from './modules'
 import { TopBar } from './TopBar'
 
 export function AppShell() {
+  const { pathname } = useLocation()
+  const moduleKey = pathname.split('/')[1] ?? ''
   return (
     <div className="shell">
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <TopBar />
       <nav className="rail" aria-label="Modules">
         <ul>
@@ -27,8 +33,10 @@ export function AppShell() {
           ))}
         </ul>
       </nav>
-      <main className="workspace" id="main">
-        <Outlet />
+      <main className="workspace" id="main" tabIndex={-1}>
+        <ModuleErrorBoundary key={moduleKey}>
+          <Outlet />
+        </ModuleErrorBoundary>
       </main>
       <footer className="statusline">
         <span>Imagery &amp; data: NASA/JPL-Caltech and partners · raw, uncalibrated products</span>

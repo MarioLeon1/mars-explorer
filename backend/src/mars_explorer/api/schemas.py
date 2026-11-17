@@ -765,3 +765,65 @@ class ChatResponse(ApiModel):
     notes: list[str]
     label: Literal["ai_generated"] = "ai_generated"
     provenance: Provenance  # derived: model-written text over the app's data
+
+
+# ---- Contract v1.5 (Phase 6: image-space path sketch) ----------------------------------------
+
+
+class FracPoint(BaseModel):
+    """A point as fractions of the image width (x) and height (y)."""
+
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+
+
+class PathSketchRequest(BaseModel):
+    image_id: str
+    goal: FracPoint
+    start: FracPoint | None = None
+    detector: Literal["blobs", "contours"] = "blobs"
+    clearance: float = Field(default=1.6, ge=1.0, le=4.0)
+    roughness_weight: float = Field(default=2.0, ge=0.0, le=10.0)
+    horizon: float | None = Field(default=None, ge=0.0, le=0.75)
+    rendition: Literal["large", "full_res"] = "large"
+
+
+class SketchObstacle(ApiModel):
+    x: float
+    y: float
+    r: float
+
+
+class PathSketchMetrics(ApiModel):
+    length_px: float
+    straight_px: float
+    detour_pct: float | None
+    min_clearance_px: float | None
+    obstacles: int
+    blocking_straight_line: int
+    grid: list[int]
+    cell_px: float
+    elapsed_ms: float
+
+
+class PathSketchOut(ApiModel):
+    image_id: str
+    width: int
+    height: int
+    found: bool
+    reason: str | None
+    path: list[list[float]]  # [[x, y]] image px of the analysed rendition
+    start: list[float]
+    goal: list[float]
+    horizon: float
+    horizon_auto: bool
+    detector: Literal["blobs", "contours"]
+    obstacles: list[SketchObstacle]
+    cost_layer: str  # data:image/png;base64 (grid resolution, stretch over the image)
+    metrics: PathSketchMetrics
+    explanation: list[str]
+    assumptions: list[str]
+    limitations: list[str]
+    kind: Literal["image_space_sketch"] = "image_space_sketch"
+    method: Literal["algorithmic"] = "algorithmic"
+    provenance: Provenance

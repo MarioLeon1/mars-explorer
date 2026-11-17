@@ -196,3 +196,24 @@
     margin-left: auto;
   }
 }
+
+/* ---- skip link (keyboard users) ------------------------------------------------------------ */
+.skip-link {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  z-index: 100;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--signal);
+  background: var(--bg-0);
+  color: var(--text-0);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.workspace:focus {
+  outline: none;
+}

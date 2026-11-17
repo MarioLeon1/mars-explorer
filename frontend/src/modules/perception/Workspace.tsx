@@ -10,6 +10,7 @@ import { ZoomViewer, type ViewerLayer } from '../explorer/ZoomViewer'
 import { EvaluationPanel } from './EvaluationPanel'
 import { MatchView } from './MatchView'
 import { ParamForm } from './ParamForm'
+import { PathSketchView } from './PathSketchView'
 import { changedParams, defaultParams, type ParamValues } from './params'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -36,7 +37,7 @@ export function Workspace({ imageId }: { imageId: string }) {
   const [analysis, setAnalysis] = useState<VisionAnalysis | null>(null)
   const [running, setRunning] = useState(false)
   const [runError, setRunError] = useState<string | null>(null)
-  const [tab, setTab] = useState<'analyze' | 'match'>('analyze')
+  const [tab, setTab] = useState<'analyze' | 'match' | 'path'>('analyze')
   const [view, setView] = useState<View>(FIT)
   const [hiddenLayers, setHiddenLayers] = useState<Set<string>>(new Set())
   const [opacity, setOpacity] = useState(0.8)
@@ -181,6 +182,16 @@ export function Workspace({ imageId }: { imageId: string }) {
           >
             Stereo match
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'path'}
+            className={tab === 'path' ? 'is-active' : ''}
+            onClick={() => setTab('path')}
+            title="Draw a path around rock candidates on this image (illustration, not a real route)"
+          >
+            Path sketch
+          </button>
         </div>
         <Link className="pw__link" to={`/explorer/${encodeURIComponent(imageId)}`}>
           Open in Explorer
@@ -189,6 +200,8 @@ export function Workspace({ imageId }: { imageId: string }) {
 
       {tab === 'match' && image && stereoPartner ? (
         <MatchView left={image} right={stereoPartner} />
+      ) : tab === 'path' && image ? (
+        <PathSketchView image={image} />
       ) : (
         <div className="pw__body">
           <nav className="pw__methods" aria-label="Methods">

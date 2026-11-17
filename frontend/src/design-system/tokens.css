@@ -17,7 +17,7 @@
   /* text */
   --text-0: #e8e6e1;
   --text-1: #a9adb3;
-  --text-2: #6c727a;
+  --text-2: #868c94; /* ≥ 4.5:1 on every --bg-* (WCAG AA, checked with axe) */
 
   /* roles */
   --accent: #d9663a;

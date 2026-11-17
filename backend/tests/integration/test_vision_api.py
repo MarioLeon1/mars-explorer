@@ -155,3 +155,50 @@ def test_benchmark_runs_both_detectors(client: TestClient) -> None:
     assert report["agreement_f1"] is not None and report["notes"]
     bad = client.post("/api/vision/benchmark", json={"cameras": ["NOPE"]})
     assert bad.status_code == 422
+
+
+# ---- v1.5: image-space path sketch ------------------------------------------------------------
+
+
+def test_path_sketch_is_a_labelled_image_space_illustration(
+    seeded: Engine, client: TestClient
+) -> None:
+    height, width = SIZE
+    x, y, r = ROCKS[1]
+    response = client.post(
+        "/api/vision/path-sketch",
+        json={
+            "image_id": NAVCAM,
+            "start": {"x": x / width, "y": (y + 5 * r) / height},
+            "goal": {"x": x / width, "y": (y - 4 * r) / height},
+            "horizon": 0,
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["found"] is True
+    assert body["kind"] == "image_space_sketch" and body["method"] == "algorithmic"
+    assert body["provenance"] == "derived"
+    assert (body["width"], body["height"]) == (width, height)
+    assert body["metrics"]["blocking_straight_line"] >= 1
+    assert body["metrics"]["detour_pct"] > 0
+    assert body["cost_layer"].startswith("data:image/png;base64,")
+    assert any("Not a drivable route" in item for item in body["limitations"])
+    assert any("pixels" in item for item in body["explanation"])
+    assert len(body["path"]) >= 2 and body["obstacles"]
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [{"goal": {"x": 1.5, "y": 0.5}}, {"clearance": 0.5}, {"horizon": 0.9}, {"detector": "cnn"}],
+)
+def test_path_sketch_validation(seeded: Engine, client: TestClient, patch: dict) -> None:
+    body = {"image_id": NAVCAM, "goal": {"x": 0.5, "y": 0.5}, **patch}
+    assert client.post("/api/vision/path-sketch", json=body).status_code == 422
+
+
+def test_path_sketch_unknown_image(client: TestClient) -> None:
+    response = client.post(
+        "/api/vision/path-sketch", json={"image_id": "nope", "goal": {"x": 0.5, "y": 0.5}}
+    )
+    assert response.status_code == 404

@@ -14,6 +14,7 @@ from mars_explorer.core.provenance import Provenance
 from mars_explorer.db.models import Annotation, ImageRecord, VisionAnalysis
 from mars_explorer.ingest.cameras import CATALOG
 from mars_explorer.vision.methods import METHODS
+from mars_explorer.vision.pathsketch import ASSUMPTIONS, LIMITATIONS, SketchParams, png_data_url
 from mars_explorer.vision.service import VisionService, summarize
 
 router = APIRouter(tags=["vision"])
@@ -244,4 +245,60 @@ def benchmark(request: Request, body: schemas.BenchmarkRequest) -> schemas.Bench
             "same places), not accuracy.",
             "Precision/recall only over images you annotated.",
         ],
+    )
+
+
+@router.post("/vision/path-sketch", response_model=schemas.PathSketchOut)
+def path_sketch(request: Request, body: schemas.PathSketchRequest) -> schemas.PathSketchOut:
+    """Image-space route around rock candidates: an illustration, never a drivable route."""
+    params = SketchParams(
+        detector=body.detector,
+        clearance=body.clearance,
+        roughness_weight=body.roughness_weight,
+        horizon=body.horizon,
+    )
+    start = (body.start.x, body.start.y) if body.start else None
+    sketch = _vision(request).path_sketch(
+        body.image_id, (body.goal.x, body.goal.y), start, params, body.rendition
+    )
+    rows, cols = sketch.grid_shape
+    detour = (
+        round((sketch.length_px / sketch.straight_px - 1) * 100, 1)
+        if sketch.found and sketch.straight_px
+        else None
+    )
+    return schemas.PathSketchOut(
+        image_id=body.image_id,
+        width=sketch.width,
+        height=sketch.height,
+        found=sketch.found,
+        reason=sketch.reason,
+        path=[[round(x, 1), round(y, 1)] for x, y in sketch.path],
+        start=[round(v, 1) for v in sketch.start],
+        goal=[round(v, 1) for v in sketch.goal],
+        horizon=sketch.horizon,
+        horizon_auto=sketch.horizon_auto,
+        detector=body.detector,
+        obstacles=[
+            schemas.SketchObstacle(x=round(c.x, 1), y=round(c.y, 1), r=round(c.r, 1))
+            for c in sketch.obstacles
+        ],
+        cost_layer=png_data_url(sketch.cost_png),
+        metrics=schemas.PathSketchMetrics(
+            length_px=round(sketch.length_px, 1),
+            straight_px=round(sketch.straight_px, 1),
+            detour_pct=detour,
+            min_clearance_px=None
+            if sketch.min_clearance_px is None
+            else round(sketch.min_clearance_px, 1),
+            obstacles=len(sketch.obstacles),
+            blocking_straight_line=sketch.blocking_straight,
+            grid=[rows, cols],
+            cell_px=round(sketch.cell_px, 2),
+            elapsed_ms=round(sketch.elapsed_ms, 1),
+        ),
+        explanation=sketch.explanation,
+        assumptions=ASSUMPTIONS,
+        limitations=LIMITATIONS,
+        provenance=Provenance.DERIVED,
     )

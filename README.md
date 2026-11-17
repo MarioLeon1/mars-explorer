@@ -1,10 +1,27 @@
 # Mars Explorer
 
-A mission-control style application for exploring **real NASA Mars 2020 Perseverance data**:
-raw rover imagery, real rover localizations, computer vision, terrain cost maps, explainable
-route planning, a mission replay and an optional read-only AI assistant.
+A mission-control style web app for exploring **real NASA Mars 2020 Perseverance data**:
+raw rover imagery, real localizations and drive paths, computer vision, cost maps on a 1 m
+orbital elevation model, explainable route planning, a sol-by-sol mission replay and an optional,
+read-only AI assistant — built to be **honest about what the data can and cannot say**.
 
 > Imagery & data: NASA/JPL-Caltech and partners. Not affiliated with or endorsed by NASA/JPL.
+
+![Mission Control](docs/media/01-mission-control.png)
+
+**Read the [case study](docs/CASE_STUDY.md)** for the design decisions, results on real data and
+the problems found along the way.
+
+## What you can do
+
+| | |
+|---|---|
+| ![Explorer](docs/media/02-explorer.png) | **Explorer** — filter the archive by sol and camera, zoom, verified stereo pairs, side-by-side / swipe comparison, download more data from the UI. |
+| ![Perception](docs/media/03-perception.png) | **Perception** — classical CV on raw frames (CLAHE, edges, two rock-candidate detectors, texture, ORB stereo matching), every result labelled by method and scored against your own marks. |
+| ![Path sketch](docs/media/04-path-sketch.png) | **Path sketch** — click a goal on an image and a deterministic planner (Theta*) draws a path around the detected rock candidates. Stamped *image-space sketch · not a drivable route*. |
+| ![Terrain](docs/media/05-terrain.png) | **Terrain & Navigation** — slope, roughness and risk from the 1 m PDS orbital DEM; A*, Dijkstra, Theta* and RRT* compared with the rover's real drive, with explanations. |
+| ![Replay](docs/media/06-replay.png) | **Mission Replay** — real drive distance per sol, LMST timelines, frame sequences reconstructed from raw images (labelled as such) and official NASA videos. |
+| ![Assistant](docs/media/07-assistant.png) | **AI assistant (optional)** — Claude with 8 read-only tools over the app's data. Off until you add your own API key; it can explain, never act. |
 
 ## Principles
 
@@ -12,8 +29,8 @@ route planning, a mission replay and an optional read-only AI assistant.
   object carries a provenance label: `real_observation`, `derived`, `simulated` or `user_generated`.
 - **Honest limits.** Raw images are uncalibrated browse products; nothing is measured from a
   single 2D photo; no fake telemetry (NASA publishes no real-time power/thermal data).
-- **Deterministic autonomy.** Route planning (Phase 4) uses explainable algorithms on a defined
-  cost map. A language model never controls the rover.
+- **Deterministic autonomy.** Route planning uses explainable algorithms on a defined cost map.
+  A language model never controls the rover.
 
 ## Status
 
@@ -24,19 +41,24 @@ route planning, a mission replay and an optional read-only AI assistant.
 | 2 | Explorer: filters, zoom viewer, stereo pairs, comparison, chronology, UI ingestion | done |
 | 3 | Perception: CLAHE, edges, 2 rock-candidate detectors, texture, ORB stereo matching, human-annotation evaluation, benchmark | done |
 | 4 | Real 1 m orbital DEM, calibrated cost maps, A* / Dijkstra / Theta* / RRT* compared with the rover's real drives | done |
-| 5 | Mission replay (sol timelines, reconstructed sequences, official NASA videos) + optional AI assistant with read-only tools | **done** |
-| 6 | Portfolio polish, E2E tests, case study | next |
+| 5 | Mission replay (sol timelines, reconstructed sequences, official NASA videos) + optional AI assistant | done |
+| 6 | Image-space path sketch, E2E + accessibility tests (Playwright, axe), error boundaries, case study | **done** |
 
 ## Architecture
 
 ```
-Browser ── Vite dev server (React + TS, :5173) ──/api──▶ FastAPI (:8000)
-                                                          ├─ ingest/   NASA raw-images feed, JPL MMGIS waypoints
-                                                          ├─ api/      contract v1 (docs/api/contract-v1.md)
-                                                          └─ db/       SQLite + local image cache (data/)
+Browser ── Vite (React 19 + TS, :5173) ──/api──▶ FastAPI (:8000)
+                                                   ├─ ingest/      NASA raw-images feed, JPL MMGIS, jobs
+                                                   ├─ vision/      classical CV + image-space path sketch
+                                                   ├─ terrain/     PDS 1 m DEM (memmap), cost layers
+                                                   ├─ navigation/  A*, Dijkstra, Theta*, RRT*
+                                                   ├─ replay/      sequences, SCLK→LMST timelines, videos
+                                                   ├─ assistant/   optional Claude tool loop (read-only)
+                                                   └─ db/          SQLite + local image cache (data/)
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for decisions and trade-offs.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for decisions and trade-offs and
+[docs/api/contract-v1.md](docs/api/contract-v1.md) for the API contract (v1 → v1.5).
 
 ## Quick start (Windows, PowerShell)
 
@@ -47,7 +69,10 @@ Prerequisites: Git, [uv](https://docs.astral.sh/uv/), Node.js 26 LTS. Full begin
 .\scripts\setup.ps1 -Seed   # install dependencies + download ~13 MB of real data
 .\scripts\dev.ps1           # start API + UI and open http://localhost:5173
 .\scripts\check.ps1         # lint, type-check, tests and build
+.\scripts\check.ps1 -E2E    # + browser end-to-end and accessibility tests (Microsoft Edge)
 ```
+
+Portfolio screenshots of your own running app: `cd frontend; npm run screenshots` → `docs/media/`.
 
 Perception benchmark (writes [docs/benchmarks/perception-benchmark.md](docs/benchmarks/perception-benchmark.md)):
 
@@ -55,7 +80,7 @@ Perception benchmark (writes [docs/benchmarks/perception-benchmark.md](docs/benc
 cd backend; uv run mars-vision benchmark
 ```
 
-Engineering notes and real-data findings: [docs/perception.md](docs/perception.md),
+Engineering notes and real-data findings: [docs/CASE_STUDY.md](docs/CASE_STUDY.md), [docs/perception.md](docs/perception.md),
 [docs/terrain-navigation.md](docs/terrain-navigation.md), [docs/replay-assistant.md](docs/replay-assistant.md).
 
 Optional AI assistant: add `ANTHROPIC_API_KEY=<key>` to `.env` and restart the backend
@@ -97,5 +122,5 @@ Details: [docs/research/2026-11-16-data-sources-and-toolchain.md](docs/research/
 
 ## Tech stack
 
-Python 3.13 · FastAPI · SQLModel/SQLite · httpx · OpenCV · NumPy · pytest · ruff — TypeScript · React 19 · Vite ·
-Vitest · Testing Library · oxlint. No UI framework; custom design system in `frontend/src/design-system`.
+Python 3.13 · FastAPI · SQLModel/SQLite · httpx · OpenCV · NumPy · Anthropic SDK · pytest · ruff — TypeScript ·
+React 19 · Vite · Vitest · Testing Library · Playwright · axe-core · oxlint. No UI framework; custom design system in `frontend/src/design-system`.

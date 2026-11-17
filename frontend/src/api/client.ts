@@ -1,4 +1,6 @@
 import type {
+  PathSketch,
+  PathSketchRequest,
   AssistantStatus,
   ChatContext,
   ChatMessage,
@@ -202,6 +204,7 @@ export const api = {
   drives: (stepM: number, signal?: AbortSignal) => request<DrivePath[]>(`/api/terrain/drives?step_m=${stepM}`, signal),
   terrainMap: (body: MapRequest) => request<TerrainMap>('/api/terrain/maps', { method: 'POST', body }),
   plan: (body: PlanRequest) => request<Plan>('/api/navigation/plans', { method: 'POST', body }),
+  pathSketch: (body: PathSketchRequest) => request<PathSketch>('/api/vision/path-sketch', { method: 'POST', body }),
   replayMission: (signal?: AbortSignal) => request<MissionTimeline>('/api/replay/mission', signal),
   replaySol: (sol: number, signal?: AbortSignal) => request<SolTimeline>(`/api/replay/sols/${sol}`, signal),
   sequences: (sol: number | null, signal?: AbortSignal) =>

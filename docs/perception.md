@@ -76,3 +76,39 @@ candidates per image, inter-detector agreement and — for annotated images — 
   15 GB) is possible on the RTX 5070, but the domain gap to Perseverance must be measured with
   annotated Perseverance images first — the annotation tool built here is the prerequisite.
 - No metric sizes or distances from single images.
+
+## Image-space path sketch (Phase 6)
+
+`vision/pathsketch.py`, Perception → *Path sketch* tab, `POST /api/vision/path-sketch`.
+
+**Idea.** Show how detections feed a planner. Rock candidates from the blob or contour detector
+become no-go discs, inflated by a clearance factor times their radius, with a soft halo around
+each one. Relative image texture (gradient energy over local brightness, 0–1 per cell) adds a
+roughness cost. Everything above the horizon line is excluded. Lazy Theta*, the same planner used
+on the orbital DEM, then finds the cheapest any-angle path from A (default: bottom centre, the
+ground nearest the camera) to the goal B the user clicks. If Theta* fails, A* is used.
+
+| Step | Detail |
+|---|---|
+| Grid | longer image side ÷ 128 cells (≈9 px per cell on a 1200 px frame) |
+| Horizon | automatic: first row from the top whose smoothed gradient energy reaches 35 % of the lower half's median (smooth sky vs. textured ground), capped at 75 %; or set by the user |
+| Excluded cells | sky, saturated or padded areas, inflated candidate discs |
+| Metrics | length, straight-line length, detour %, closest approach to a candidate edge, candidates on the straight line (all in pixels) |
+| Speed | ~0.2 s on a 1200 × 900 frame (detection included) |
+
+**Why it is not a route.** A single uncalibrated image has no scale. Perspective squeezes far
+terrain into a few rows. Slopes, sand and drop-offs are invisible. Perseverance's AutoNav plans on
+3D maps built from stereo pairs. The UI stamps every result *IMAGE-SPACE SKETCH · not a drivable
+route*. All metrics are pixels, and the result is `derived` / `algorithmic`.
+
+**Found on real data.**
+
+- On ground-pointing Navcam frames, the 300-candidate cap is often reached: pebbles count as
+  candidates. The clearance slider shows the trade-off between a cautious path and no path at
+  all.
+- On Front Hazcam frames, the rover's own wheels and shadow are *not* candidates, so the default
+  start can sit on hardware. The UI lets the user move A, and the limitation is listed.
+
+**Natural next step.** Triangulate the stereo pair with the CAHVORE camera models to get metric
+3D points. That would turn this into a real local hazard map, and the same planner would apply
+unchanged.

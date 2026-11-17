@@ -11,7 +11,7 @@ The user is the project owner (CS background, new to robotics/planetary science)
   - `db/` SQLModel tables + session
   - `ingest/` NASA clients (raw-images feed, MMGIS waypoints), downloader, CLI `mars-ingest`
   - `api/` FastAPI app + routers (contract: `docs/api/contract-v1.md`)
-  - `vision/` classical CV: method registry (`methods.py`), detectors, texture, ORB matching, evaluation, benchmark CLI `mars-vision`
+  - `vision/` classical CV: method registry (`methods.py`), detectors, texture, ORB matching, evaluation, benchmark CLI `mars-vision`, image-space path sketch (`pathsketch.py`)
   - `terrain/` PLACES 1 m DEM reader (memmap), derived layers, map service, CLI `mars-terrain`
   - `navigation/` grid planners (A*, Dijkstra, Lazy Theta*, k-nearest RRT*), metrics, explanations
   - `replay/` sequence grouping/classification (SCLK order), sol timelines (SCLK→LMST), featured sequences, official video allowlist
@@ -34,6 +34,8 @@ uv run mars-terrain status                # DEM validation against real localiza
 uv run uvicorn mars_explorer.api.app:app --reload --port 8000
 # frontend (run inside frontend/)
 npm install ; npm run dev ; npm test ; npm run build ; npm run lint
+npm run e2e                               # Playwright + axe in Edge (isolated offline backend :8100, web :5180)
+npm run screenshots                       # docs/media/*.png from the running app (real data)
 # both at once (repo root)
 .\scripts\dev.ps1
 ```
@@ -71,6 +73,11 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
 - CV: see `.claude/skills/computer-vision` + `docs/perception.md`. Bump `vision.ALGORITHM_VERSION` when an algorithm changes (analysis cache key).
 - Windows console is cp1252: CLI output must stay ASCII (files are UTF-8).
 - `.visually-hidden` must keep `top/left: 0` or hidden text stretches the document.
+- E2E: `frontend/e2e/` + `backend/tests/e2e_seed.py` (offline seed from captured fixtures, synthetic
+  pixels). Vite proxy target comes from `MARS_API_TARGET`. axe found `--text-2` too dark once: keep
+  every text token ≥ 4.5:1 on all `--bg-*`. Interactive screenshots: use Playwright (`channel: 'msedge'`),
+  not hand-made CDP scripts (they hung on navigation after an Edge update).
+- Path sketch is image-space only (pixels): never present it as a route or a measurement.
 - Terrain/navigation: see `.claude/skills/autonomous-navigation` + `docs/terrain-navigation.md`.
 - Replay/assistant: see `docs/replay-assistant.md`. Describe sequences from the stored records
   (frame counts, cadence) — never from a partial listing that may mix sequence ids.
@@ -91,4 +98,6 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
   Backend 125 tests + 3 live; frontend 63 tests.
 - Phase 5 (Mission Replay + optional AI assistant, contract v1.4) — done 2026-11-17.
   Backend 175 tests + 4 live; frontend 79 tests. Assistant ready, off until a key is set.
-- Next: Phase 6 portfolio polish, E2E tests, case study.
+- Phase 6 (path sketch, contract v1.5, E2E + a11y, error boundary, case study) — done 2026-11-17.
+  Backend 187 tests + 4 live; frontend 83 tests; 14 E2E (Playwright/Edge).
+- Possible next: CAHVORE stereo triangulation → metric local hazard map; learned segmentation.
