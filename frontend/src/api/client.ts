@@ -1,4 +1,14 @@
 import type {
+  AssistantStatus,
+  ChatContext,
+  ChatMessage,
+  ChatResponse,
+  FeaturedSequence,
+  MissionTimeline,
+  OfficialVideo,
+  SequenceDetail,
+  SequenceSummary,
+  SolTimeline,
   Annotation,
   DrivePath,
   MapRequest,
@@ -192,6 +202,17 @@ export const api = {
   drives: (stepM: number, signal?: AbortSignal) => request<DrivePath[]>(`/api/terrain/drives?step_m=${stepM}`, signal),
   terrainMap: (body: MapRequest) => request<TerrainMap>('/api/terrain/maps', { method: 'POST', body }),
   plan: (body: PlanRequest) => request<Plan>('/api/navigation/plans', { method: 'POST', body }),
+  replayMission: (signal?: AbortSignal) => request<MissionTimeline>('/api/replay/mission', signal),
+  replaySol: (sol: number, signal?: AbortSignal) => request<SolTimeline>(`/api/replay/sols/${sol}`, signal),
+  sequences: (sol: number | null, signal?: AbortSignal) =>
+    request<SequenceSummary[]>(sol === null ? '/api/replay/sequences' : `/api/replay/sequences?sol=${sol}`, signal),
+  sequence: (id: string, signal?: AbortSignal) =>
+    request<SequenceDetail>(`/api/replay/sequences/${encodeURIComponent(id)}`, signal),
+  featured: (signal?: AbortSignal) => request<FeaturedSequence[]>('/api/replay/featured', signal),
+  videos: (signal?: AbortSignal) => request<OfficialVideo[]>('/api/replay/videos', signal),
+  assistantStatus: (signal?: AbortSignal) => request<AssistantStatus>('/api/assistant/status', signal),
+  chat: (messages: ChatMessage[], context?: ChatContext) =>
+    request<ChatResponse>('/api/assistant/chat', { method: 'POST', body: { messages, context } }),
   benchmark: (cameras: string[], limit: number) =>
     request<Benchmark>('/api/vision/benchmark', { method: 'POST', body: { cameras, limit } }),
 }

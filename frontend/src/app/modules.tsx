@@ -73,13 +73,9 @@ export const MODULES: ModuleDef[] = [
     short: 'Replay',
     icon: <IconReplay />,
     phase: 5,
-    available: false,
-    description: 'Timeline of real observations, official videos and reconstructed frame sequences.',
-    plan: [
-      'Sol-by-sol timeline linking images to real localizations',
-      'Official NASA videos (EDL landing, Ingenuity) from the NASA Image Library',
-      'Frame-sequence playback rebuilt from raw images — always labelled as reconstructed',
-    ],
+    available: true,
+    description: 'Sol-by-sol timeline of real images and drives, reconstructed frame sequences and official NASA videos.',
+    plan: [],
   },
   {
     id: 'assistant',
@@ -88,12 +84,8 @@ export const MODULES: ModuleDef[] = [
     short: 'Assist',
     icon: <IconAssistant />,
     phase: 5,
-    available: false,
-    description: 'Optional AI assistant with read-only access to mission context. Never drives the rover.',
-    plan: [
-      'Explain selected images, perception results and route decisions',
-      'Generate concise mission reports from stored data',
-      'Optional: needs an API key; the app works fully without it',
-    ],
+    available: true,
+    description: 'Optional AI assistant (your Anthropic API key) with read-only access to mission data. Never drives the rover.',
+    plan: [],
   },
 ]

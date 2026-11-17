@@ -16,7 +16,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from mars_explorer import __version__
-from mars_explorer.api.routers import images, ingest, meta, rover, system, terrain, vision
+from mars_explorer.api.routers import (
+    assistant,
+    images,
+    ingest,
+    meta,
+    replay,
+    rover,
+    system,
+    terrain,
+    vision,
+)
+from mars_explorer.assistant.service import AssistantService, ClientFactory, default_client_factory
 from mars_explorer.core.config import Settings, get_settings
 from mars_explorer.core.errors import AppError
 from mars_explorer.core.logging import configure_logging
@@ -39,8 +50,10 @@ def create_app(
     settings: Settings | None = None,
     transport: httpx.BaseTransport | None = None,
     dem_spec: DemSpec = PLACES_DEM,
+    assistant_client_factory: ClientFactory = default_client_factory,
 ) -> FastAPI:
-    """Build the app. ``transport`` lets tests replace all outbound HTTP (NASA downloads)."""
+    """Build the app. ``transport`` lets tests replace all outbound HTTP (NASA downloads);
+    ``assistant_client_factory`` lets them replace the Anthropic client."""
     settings = settings or get_settings()
 
     @asynccontextmanager
@@ -53,7 +66,16 @@ def create_app(
         app.state.jobs = JobManager(app.state.engine, settings, transport=transport)
         app.state.vision = VisionService(app.state.engine, settings, app.state.downloader)
         app.state.terrain = TerrainService(settings, app.state.engine, dem_spec)
+        app.state.assistant = AssistantService(
+            settings, app.state.engine, app.state.terrain, assistant_client_factory
+        )
         log.info("Mars Explorer API %s — data dir %s", __version__, settings.data_dir)
+        log.info(
+            "AI assistant: %s",
+            f"enabled ({settings.assistant_model})"
+            if app.state.assistant.enabled
+            else "disabled (no ANTHROPIC_API_KEY)",
+        )
         yield
         app.state.jobs.shutdown()
         app.state.http.close()
@@ -90,6 +112,8 @@ def create_app(
         system.router,
         vision.router,
         terrain.router,
+        replay.router,
+        assistant.router,
     ):
         app.include_router(router, prefix="/api")
     return app

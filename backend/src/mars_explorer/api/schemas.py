@@ -569,3 +569,199 @@ class PlanOut(ApiModel):
     best: str | None
     explanation: list[str]
     provenance: Provenance
+
+
+# ---- Contract v1.4 (Phase 5: Mission Replay + AI assistant) ----------------------------------
+
+SequenceKindOut = Literal[
+    "fixed_pointing", "pointing_sweep", "vehicle_fixed", "single_exposure", "unclassified"
+]
+
+
+class SequenceSummary(ApiModel):
+    id: str
+    sol: int
+    camera: Camera
+    sequence_id: str | None
+    kind: SequenceKindOut
+    kind_note: str
+    frame_count: int
+    duration_s: float | None
+    median_interval_s: float | None
+    distinct_pointings: int | None
+    start_lmst: str | None
+    thumb_url: str
+    label: Literal["reconstructed"] = "reconstructed"
+    provenance: Provenance  # derived: the grouping/ordering is ours; each frame is real
+
+
+class SequenceFrame(ApiModel):
+    image_id: str
+    t_offset_s: float | None
+    sclk: float | None
+    lmst: str | None
+    width: int | None
+    height: int | None
+    thumb_url: str
+    preview_url: str
+    provenance: Provenance
+
+
+class SequenceDetail(SequenceSummary):
+    frames: list[SequenceFrame]
+    notes: list[str]
+    credits: list[str]
+    real_time_available: bool
+
+
+class SolActivityOut(ApiModel):
+    sol: int
+    images: int
+    sequences: int
+    drives: int
+    drive_m: float
+
+
+class MissionTimeline(ApiModel):
+    sols: list[SolActivityOut]
+    total_drive_m: float
+    drive_sols: int
+    image_sols: int
+    provenance: Provenance
+    sources: list[SourceRef]
+    notes: list[str]
+
+
+class TimelineImageOut(ApiModel):
+    image_id: str
+    camera: Camera
+    lmst: str | None
+    lmst_h: float | None
+    sclk: float | None
+    sequence_id: str | None
+    thumb_url: str
+
+
+class TimelineDriveOut(ApiModel):
+    index: int
+    from_rmc: str | None
+    to_rmc: str | None
+    length_m: float | None
+    start_lmst_h: float | None
+    end_lmst_h: float | None
+    provenance: Provenance  # the drive is real; its LMST placement is derived
+
+
+class LmstCalibrationOut(ApiModel):
+    samples: int
+    max_residual_s: float
+    method: str
+
+
+class SolTimelineOut(ApiModel):
+    sol: int
+    images: list[TimelineImageOut]
+    sequences: list[SequenceSummary]
+    drives: list[TimelineDriveOut]
+    end_of_sol_position: WaypointPoint | None
+    lmst_calibration: LmstCalibrationOut | None
+    previous_sol: int | None
+    next_sol: int | None
+    notes: list[str]
+
+
+class FeaturedSequenceOut(ApiModel):
+    key: str
+    title: str
+    description: str
+    sol: int
+    camera: Camera
+    sequence_id: str
+    published_frames: int
+    local_frames: int
+    sequence_url: str | None  # /api/replay/sequences/{id} once frames are stored
+    job_request: IngestJobRequest
+    provenance: Provenance
+
+
+class OfficialVideoOut(ApiModel):
+    nasa_id: str
+    title: str
+    date: str
+    sol: int | None
+    description: str
+    credit: str
+    video_url: str
+    poster_url: str
+    page_url: str
+    label: Literal["official_nasa_video"] = "official_nasa_video"
+    provenance: Provenance
+
+
+class AssistantToolOut(ApiModel):
+    name: str
+    description: str
+
+
+class ModelPrice(ApiModel):
+    model: str
+    input_usd_per_mtok: float
+    output_usd_per_mtok: float
+    note: str
+
+
+class AssistantStatusOut(ApiModel):
+    enabled: bool
+    model: str
+    effort: str
+    fallbacks: bool
+    max_tool_rounds: int
+    tools: list[AssistantToolOut]
+    how_to_enable: list[str]
+    data_sent: list[str]
+    never: list[str]
+    pricing: list[ModelPrice]
+
+
+class ChatMessageIn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=8000)
+
+
+class ChatContextIn(BaseModel):
+    page: str | None = Field(default=None, max_length=40)
+    sol: int | None = Field(default=None, ge=0)
+    image_id: str | None = Field(default=None, max_length=80)
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessageIn] = Field(min_length=1, max_length=40)
+    context: ChatContextIn | None = None
+
+
+class ToolCallOut(ApiModel):
+    name: str
+    input: dict[str, Any]
+    is_error: bool
+    result_chars: int
+
+
+class UsageOut(ApiModel):
+    input_tokens: int
+    output_tokens: int
+    cache_read_input_tokens: int
+    cache_creation_input_tokens: int
+
+
+class ChatResponse(ApiModel):
+    reply: str
+    model: str
+    stop_reason: str | None
+    refused: bool
+    fallback_used: bool
+    rounds: int
+    tool_calls: list[ToolCallOut]
+    usage: UsageOut
+    notes: list[str]
+    label: Literal["ai_generated"] = "ai_generated"
+    provenance: Provenance  # derived: model-written text over the app's data

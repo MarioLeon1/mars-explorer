@@ -115,6 +115,7 @@ def settings(tmp_path: Path) -> Settings:
         request_delay_s=0,
         download_delay_s=0,
         max_retries=1,
+        anthropic_api_key=None,  # never pick up a real key from the environment
         _env_file=None,  # type: ignore[call-arg]
     )
 

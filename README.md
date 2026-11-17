@@ -1,8 +1,8 @@
 # Mars Explorer
 
 A mission-control style application for exploring **real NASA Mars 2020 Perseverance data**:
-raw rover imagery, real rover localizations and (in later phases) computer vision, terrain
-cost maps and explainable autonomous route planning.
+raw rover imagery, real rover localizations, computer vision, terrain cost maps, explainable
+route planning, a mission replay and an optional read-only AI assistant.
 
 > Imagery & data: NASA/JPL-Caltech and partners. Not affiliated with or endorsed by NASA/JPL.
 
@@ -23,9 +23,9 @@ cost maps and explainable autonomous route planning.
 | 1 | Ingestion pipeline, REST API, Mission Control UI | done |
 | 2 | Explorer: filters, zoom viewer, stereo pairs, comparison, chronology, UI ingestion | done |
 | 3 | Perception: CLAHE, edges, 2 rock-candidate detectors, texture, ORB stereo matching, human-annotation evaluation, benchmark | done |
-| 4 | Real 1 m orbital DEM, calibrated cost maps, A* / Dijkstra / Theta* / RRT* compared with the rover's real drives | **done** |
-| 5 | Mission replay + optional AI assistant | next |
-| 6 | Portfolio polish, E2E tests, case study | planned |
+| 4 | Real 1 m orbital DEM, calibrated cost maps, A* / Dijkstra / Theta* / RRT* compared with the rover's real drives | done |
+| 5 | Mission replay (sol timelines, reconstructed sequences, official NASA videos) + optional AI assistant with read-only tools | **done** |
+| 6 | Portfolio polish, E2E tests, case study | next |
 
 ## Architecture
 
@@ -56,7 +56,11 @@ cd backend; uv run mars-vision benchmark
 ```
 
 Engineering notes and real-data findings: [docs/perception.md](docs/perception.md),
-[docs/terrain-navigation.md](docs/terrain-navigation.md).
+[docs/terrain-navigation.md](docs/terrain-navigation.md), [docs/replay-assistant.md](docs/replay-assistant.md).
+
+Optional AI assistant: add `ANTHROPIC_API_KEY=<key>` to `.env` and restart the backend
+(details and costs in the Assistant page and in docs/replay-assistant.md). Without a key the
+assistant stays off and everything else works.
 
 Terrain (one-time, ~325 MB from NASA PDS):
 
@@ -83,6 +87,7 @@ API documentation (OpenAPI) is served at http://127.0.0.1:8000/docs while the ba
 | JPL MMGIS `M20_waypoints.json` | real rover localizations | `-9999` and mid-drive `0.0` odometry treated as missing |
 | JPL MMGIS `M20_traverse.json` | real drive paths (~1 m vertices) | replanning endpoints and comparison |
 | PDS PLACES `m20_orbital_dem` | 1 m orbital DEM (324.5 MB) | georeferencing validated against 708 localizations (median 0.002 m) |
+| NASA Image and Video Library | 3 official videos (landing, Ingenuity) | allowlist, https assets verified live, streamed not stored |
 | `api.nasa.gov/mars-photos` | — | **discontinued (HTTP 404)**; not used |
 
 Feed quirks handled: a literal `|` in the query → HTTP 400; an unknown `id=` silently returns the

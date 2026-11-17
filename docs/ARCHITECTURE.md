@@ -12,7 +12,9 @@ frontend (React/TS) ──HTTP /api──▶ backend (FastAPI)
                                     ingest/     NASA clients, parser, downloader, CLI
                                     db/         SQLModel tables, engine
                                     core/       config, logging, provenance, errors
-                                    (later) vision/ terrain/ navigation/ replay/ assistant/
+                                    vision/ terrain/ navigation/   perception, DEM, planners
+                                    replay/     sequences, sol timelines, official videos
+                                    assistant/  optional Claude tool loop (read-only tools)
                                     data/       SQLite + image cache (gitignored)
 ```
 
@@ -27,6 +29,8 @@ frontend (React/TS) ──HTTP /api──▶ backend (FastAPI)
 | Contract-first API (`docs/api/contract-v1.md`) | frontend and backend evolve independently; TS types mirror Pydantic schemas | generated clients (more tooling than needed now) |
 | React + TS + Vite, no UI kit | full control of a non-generic visual identity; small bundle | MUI/Chakra (generic look), Next.js (SSR not needed) |
 | Deterministic planners (Phase 4) | explainable, testable, safe | learning-based control; LLM control (rejected outright) |
+| Assistant = manual tool loop over read-only tools, off without a key | the LLM can explain data but never act; app fully usable without a paid key | agent frameworks (more surface, less control); LLM-driven planning (rejected) |
+| Official videos streamed from NASA, not stored | real NASA products shown unmodified; no 15–60 MB files in data/ | re-hosting (unneeded copies) |
 | No ROS 2 / Gazebo now | experimental on native Windows, needs WSL2; not needed for a web app | revisit as an optional extension |
 
 ## Data flow (Phase 1)

@@ -14,7 +14,8 @@ The user is the project owner (CS background, new to robotics/planetary science)
   - `vision/` classical CV: method registry (`methods.py`), detectors, texture, ORB matching, evaluation, benchmark CLI `mars-vision`
   - `terrain/` PLACES 1 m DEM reader (memmap), derived layers, map service, CLI `mars-terrain`
   - `navigation/` grid planners (A*, Dijkstra, Lazy Theta*, k-nearest RRT*), metrics, explanations
-  - later: `replay/`, `assistant/`
+  - `replay/` sequence grouping/classification (SCLK order), sol timelines (SCLK→LMST), featured sequences, official video allowlist
+  - `assistant/` optional Claude tool loop (`anthropic` SDK), 8 read-only tools, disabled without `ANTHROPIC_API_KEY`
 - `frontend/` — Vite + React 19 + TypeScript. `src/design-system/` (tokens, primitives), `src/modules/<module>/`, `src/api/` (typed client mirroring the contract). Vite proxies `/api` → `127.0.0.1:8000`.
 - `data/` — local only (gitignored): `mars.db`, `images/`, later `terrain/`.
 - `docs/` — `SETUP.md` (step-by-step guide), `ARCHITECTURE.md`, `api/`, `research/`.
@@ -71,6 +72,12 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
 - Windows console is cp1252: CLI output must stay ASCII (files are UTF-8).
 - `.visually-hidden` must keep `top/left: 0` or hidden text stretches the document.
 - Terrain/navigation: see `.claude/skills/autonomous-navigation` + `docs/terrain-navigation.md`.
+- Replay/assistant: see `docs/replay-assistant.md`. Describe sequences from the stored records
+  (frame counts, cadence) — never from a partial listing that may mix sequence ids.
+- `anthropic` SDK 2.x is built on **httpx2** (not httpx): tests use `httpx2.MockTransport` via
+  `anthropic.DefaultHttpxClient(transport=...)`. Test settings force `anthropic_api_key=None`.
+- NASA Image Library asset links are `http://` with unencoded ids (some contain `’`) → build
+  `https://` URLs with `urllib.parse.quote`.
 
 ## Status
 - Phase 0 (env, repo, skeleton) — done 2026-11-16.
@@ -82,4 +89,6 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
   Backend 88 tests + 3 live; frontend 55 tests.
 - Phase 4 (Terrain & Navigation, contract v1.3, real drive replanning) — done 2026-11-17.
   Backend 125 tests + 3 live; frontend 63 tests.
-- Next: Phase 5 Mission Replay + optional AI assistant.
+- Phase 5 (Mission Replay + optional AI assistant, contract v1.4) — done 2026-11-17.
+  Backend 175 tests + 4 live; frontend 79 tests. Assistant ready, off until a key is set.
+- Next: Phase 6 portfolio polish, E2E tests, case study.

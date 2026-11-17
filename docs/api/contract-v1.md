@@ -233,3 +233,20 @@ Coordinates are easting/northing (metres) in the PLACES DEM projection (`{e, n}`
 `cost_model`: `{max_slope_deg 5–45 (30), slope_weight 0–20 (4), max_roughness_m 0.05–2 (0.30), roughness_weight 0–20 (3)}`.
 Route `kind`: `deterministic` (A*, Dijkstra, Theta*), `randomized` (RRT*, with `extra.seed`), `real_observation` (the rover's drive).
 Metrics: `length_m, impassable_m, cost (null if blocked), cost_distance/slope/roughness, max/mean_slope_deg, max_roughness_m, elevation_gain/loss_m, min_clearance_m, profile [[distance, elevation]]`.
+
+---
+
+# v1.4 additions (Phase 5: Mission Replay + AI assistant) — backwards compatible
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/replay/mission` | every sol with stored images or a real drive: `{sol, images, sequences, drives, drive_m}` + totals, sources |
+| GET | `/api/replay/sols/{sol}` | sol timeline: images with LMST, sequences (≥2 frames), real drives with derived LMST placement, end-of-sol localization, `lmst_calibration`, previous/next sol; 404 if nothing stored |
+| GET | `/api/replay/sequences?sol=&min_frames=3` | reconstructed sequences (`label: "reconstructed"`, `provenance: "derived"`) |
+| GET | `/api/replay/sequences/{id}` | frames in SCLK order with `t_offset_s`, notes, credits, `real_time_available`; id = `<sol>-<instrument>-<sequence_id or NOSEQ>` |
+| GET | `/api/replay/featured` | curated published sequences with `local_frames`, `sequence_url` (once stored) and a ready `job_request` for `POST /api/ingest/jobs` |
+| GET | `/api/replay/videos` | official NASA Image Library videos (`label: "official_nasa_video"`), https asset + poster + page URLs, credit |
+| GET | `/api/assistant/status` | `enabled`, model, effort, fallbacks, tools, `how_to_enable`, `data_sent`, `never`, pricing |
+| POST | `/api/assistant/chat` | `{messages: [{role, content}] (1–40, last = user), context?: {page, sol, image_id}}` → `{reply, model, stop_reason, refused, fallback_used, rounds, tool_calls, usage, notes, label: "ai_generated", provenance: "derived"}`; `503 assistant_disabled` without a key; 502/429 `assistant_*` upstream errors |
+
+Sequence `kind`: `fixed_pointing | pointing_sweep | vehicle_fixed | single_exposure | unclassified`.

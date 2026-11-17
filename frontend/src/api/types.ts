@@ -501,3 +501,165 @@ export interface PlanRequest {
   rrt_seed: number
   rrt_iterations: number
 }
+
+// ---- Contract v1.4 (Phase 5: Mission Replay + AI assistant) ------------------------------
+
+export type SequenceKind = 'fixed_pointing' | 'pointing_sweep' | 'vehicle_fixed' | 'single_exposure' | 'unclassified'
+
+export interface SequenceSummary {
+  id: string
+  sol: number
+  camera: Camera
+  sequence_id: string | null
+  kind: SequenceKind
+  kind_note: string
+  frame_count: number
+  duration_s: number | null
+  median_interval_s: number | null
+  distinct_pointings: number | null
+  start_lmst: string | null
+  thumb_url: string
+  label: 'reconstructed'
+  provenance: Provenance
+}
+
+export interface SequenceFrame {
+  image_id: string
+  /** Seconds since the first frame, from the spacecraft clock. */
+  t_offset_s: number | null
+  sclk: number | null
+  lmst: string | null
+  width: number | null
+  height: number | null
+  thumb_url: string
+  preview_url: string
+  provenance: Provenance
+}
+
+export interface SequenceDetail extends SequenceSummary {
+  frames: SequenceFrame[]
+  notes: string[]
+  credits: string[]
+  real_time_available: boolean
+}
+
+export interface SolActivity {
+  sol: number
+  images: number
+  sequences: number
+  drives: number
+  drive_m: number
+}
+
+export interface MissionTimeline {
+  sols: SolActivity[]
+  total_drive_m: number
+  drive_sols: number
+  image_sols: number
+  provenance: Provenance
+  sources: SourceRef[]
+  notes: string[]
+}
+
+export interface TimelineImage {
+  image_id: string
+  camera: Camera
+  lmst: string | null
+  lmst_h: number | null
+  sclk: number | null
+  sequence_id: string | null
+  thumb_url: string
+}
+
+export interface TimelineDrive {
+  index: number
+  from_rmc: string | null
+  to_rmc: string | null
+  length_m: number | null
+  start_lmst_h: number | null
+  end_lmst_h: number | null
+  provenance: Provenance
+}
+
+export interface SolTimeline {
+  sol: number
+  images: TimelineImage[]
+  sequences: SequenceSummary[]
+  drives: TimelineDrive[]
+  end_of_sol_position: WaypointPoint | null
+  lmst_calibration: { samples: number; max_residual_s: number; method: string } | null
+  previous_sol: number | null
+  next_sol: number | null
+  notes: string[]
+}
+
+export interface FeaturedSequence {
+  key: string
+  title: string
+  description: string
+  sol: number
+  camera: Camera
+  sequence_id: string
+  published_frames: number
+  local_frames: number
+  sequence_url: string | null
+  job_request: IngestJobRequest
+  provenance: Provenance
+}
+
+export interface OfficialVideo {
+  nasa_id: string
+  title: string
+  date: string
+  sol: number | null
+  description: string
+  credit: string
+  video_url: string
+  poster_url: string
+  page_url: string
+  label: 'official_nasa_video'
+  provenance: Provenance
+}
+
+export interface AssistantStatus {
+  enabled: boolean
+  model: string
+  effort: string
+  fallbacks: boolean
+  max_tool_rounds: number
+  tools: { name: string; description: string }[]
+  how_to_enable: string[]
+  data_sent: string[]
+  never: string[]
+  pricing: { model: string; input_usd_per_mtok: number; output_usd_per_mtok: number; note: string }[]
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ChatContext {
+  page?: string
+  sol?: number
+  image_id?: string
+}
+
+export interface ChatResponse {
+  reply: string
+  model: string
+  stop_reason: string | null
+  refused: boolean
+  fallback_used: boolean
+  rounds: number
+  tool_calls: { name: string; input: Record<string, unknown>; is_error: boolean; result_chars: number }[]
+  usage: {
+    input_tokens: number
+    output_tokens: number
+    cache_read_input_tokens: number
+    cache_creation_input_tokens: number
+  }
+  notes: string[]
+  label: 'ai_generated'
+  provenance: Provenance
+}

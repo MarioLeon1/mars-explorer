@@ -198,6 +198,32 @@ cada endpoint con *Try it out* y ver el JSON real.
   Verás la tabla comparativa, el perfil de elevación (pasa el ratón) y *Why this route*.
 - *Assumptions and limitations*: qué supone el modelo y qué no puede ver (rocas < 1 m).
 
+**En Replay** (menú izquierdo → *Replay*):
+- **Mission timeline** (arriba): distancia real conducida en cada sol (barras) y, debajo, una
+  marca por cada sol con imágenes guardadas. Pasa el ratón para ver detalles; haz clic para abrir ese sol.
+- **Sol timeline**: cada punto es una imagen, colocada en su hora solar local (LMST); la barra
+  naranja es la conducción real de ese sol. Clic en un punto → abre su secuencia (o la imagen en Explorer).
+- **Reconstructed sequence**: reproduce los fotogramas reales en orden. Siempre lleva el sello
+  *RECONSTRUCTED · not a NASA video*. *Real timing* respeta el tiempo real entre exposiciones
+  (acelerado ×1–×30); *Fixed rate* va a fotogramas por segundo fijos. El tipo de secuencia te dice
+  si lo que ves es cambio en el tiempo (*Fixed pointing*) o un barrido de cámara (*Pointing sweep*).
+- **Featured sequences** (derecha): pulsa *Download … frames from NASA* (aterrizaje LCAM, 87
+  fotogramas; horizonte del sol 2024, 21) y luego *Play reconstruction*.
+- **Official NASA videos**: vídeos oficiales (aterrizaje, vuelos de Ingenuity), con su crédito,
+  servidos directamente desde la NASA.
+
+**En Assistant** (menú izquierdo → *Assist*): sin clave verás *AI assistant · not configured* con
+los pasos, qué datos se enviarían y el coste. Para activarlo:
+1. Crea una clave de API en <https://platform.claude.com> (*Settings → API keys*). Se paga por uso,
+   aparte de cualquier suscripción a Claude.ai. Puedes poner un límite de gasto en la consola.
+2. Abre el archivo `.env` de la raíz del proyecto y rellena la línea `ANTHROPIC_API_KEY=` con tu clave
+   (sin comillas ni espacios). Opcional: `MARS_ASSISTANT_MODEL=claude-haiku-5-5` para gastar mucho menos.
+3. Cierra las ventanas del backend y vuelve a ejecutar `.\scripts\dev.ps1`. En la ventana del
+   backend verás `AI assistant: enabled (...)`.
+4. En *Assist*, prueba una de las preguntas sugeridas. Cada respuesta lleva la etiqueta
+   *AI-GENERATED*, las herramientas que usó, los tokens y el coste estimado.
+El asistente solo **lee** datos de la app: no planifica rutas, no descarga nada y no cambia nada.
+
 **Ampliar el archivo de imágenes desde la terminal** (en `backend/`):
 ```powershell
 uv run mars-ingest images --sol 1201 --camera NAVCAM_LEFT --limit 20
@@ -220,10 +246,10 @@ el registro original de la NASA, sin modificar.
 
 ```powershell
 .\scripts\check.ps1        # todo, sin red: lint, tipos, tests y build
-.\scripts\check.ps1 -Live  # además, 3 tests contra los servidores reales de la NASA
+.\scripts\check.ps1 -Live  # además, 4 tests contra los servidores reales de la NASA
 ```
 
-**Qué deberías ver:** `All checks passed.` (backend: 125 tests; frontend: 63 tests).
+**Qué deberías ver:** `All checks passed.` (backend: 175 tests; frontend: 79 tests).
 
 Por separado:
 ```powershell

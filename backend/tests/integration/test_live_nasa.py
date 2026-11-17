@@ -54,3 +54,27 @@ def test_mmgis_waypoints_contract(live_settings: Settings) -> None:
         waypoints = parse_waypoints(response.json())
         assert len(waypoints) >= 700
         assert waypoints[-1].sol >= 2022
+
+
+def test_official_videos_and_featured_sequences_still_published(live_settings: Settings) -> None:
+    from mars_explorer.ingest.parse import parse_sequence_id
+    from mars_explorer.replay.service import FEATURED
+    from mars_explorer.replay.videos import OFFICIAL_VIDEOS
+
+    with make_http_client(live_settings) as http:
+        for video in OFFICIAL_VIDEOS:
+            for url in (video.video_url, video.poster_url):
+                response = http.head(url, follow_redirects=True)
+                assert response.status_code == 200, url
+        assert http.head(OFFICIAL_VIDEOS[0].video_url).headers["content-type"] == "video/mp4"
+        client = RawImagesClient(http, live_settings)
+        for item in FEATURED:
+            records = list(
+                client.iter_images(
+                    FeedQuery(sol_min=item.sol, sol_max=item.sol, instruments=(item.instrument,)),
+                    limit=item.job_limit,
+                )
+            )
+            ids = [parse_sequence_id(r["imageid"]) for r in records]
+            in_sequence = [s for s in ids if s == item.sequence_id]
+            assert len(in_sequence) == item.published_frames, item.key

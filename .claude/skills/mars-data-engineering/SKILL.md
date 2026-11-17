@@ -20,6 +20,12 @@ description: Use when adding or changing ingestion of NASA/JPL data in Mars Expl
 - MMGIS waypoints: `-9999` = missing; mid-drive fixes have `dist_total_m = 0.0` = missing.
 - Not every sol has every camera (Hazcams ≈ drive sols). Pick seed sols from real waypoint sols.
 - SQLModel requires timezone-aware datetimes.
+- Order frames by **SCLK**, not `date_taken_utc` (UTC dates are wrong around landing, sol 0).
+- `sequence_id` comes from the product id; one sol/camera often holds several sequences
+  (sol 2024 Navcam: `NCAM00518` 8 frames at ~25 s, `NCAM00520` 21 frames at ~4 s). Group before
+  describing cadence or pointing.
+- NASA Image Library: asset links are `http://` with raw ids (may contain `’`) → build `https://`
+  URLs with `urllib.parse.quote`; `<video>` streams without CORS, so official videos are not stored.
 
 ## Pipeline contract
 - Parse defensively (`ingest/parse.py` helpers): unusable → `None`, never a guessed value.
