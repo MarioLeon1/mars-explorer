@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Explorer } from '../modules/explorer/Explorer'
 import { MissionControl } from '../modules/mission-control/MissionControl'
 import { Perception } from '../modules/perception/Perception'
+import { TerrainNavigation } from '../modules/terrain/TerrainNavigation'
 import { AppShell } from './AppShell'
 import { MODULES } from './modules'
 import { PlannedModule } from './PlannedModule'
@@ -18,6 +19,7 @@ export function App() {
             <Route path="/explorer/:imageId" element={<Explorer />} />
             <Route path="/perception" element={<Perception />} />
             <Route path="/perception/:imageId" element={<Perception />} />
+            <Route path="/terrain" element={<TerrainNavigation />} />
             {MODULES.filter((m) => !m.available).map((module) => (
               <Route key={module.id} path={module.path} element={<PlannedModule module={module} />} />
             ))}

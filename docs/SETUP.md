@@ -186,6 +186,18 @@ cada endpoint con *Try it out* y ver el JSON real.
   Desde la terminal: `cd backend; uv run mars-vision benchmark` (escribe el informe en
   `docs/benchmarks/perception-benchmark.md`).
 
+**En Terrain** (menú izquierdo → *Terrain*). La primera vez descarga el DEM orbital real
+(unos 325 MB): `cd backend; uv run mars-terrain fetch` (se puede reanudar si se corta).
+- **Mapa general** (arriba a la izquierda): todo el DEM con el recorrido real del rover; haz clic
+  para mover el mapa de trabajo y elige el tamaño (400 m – 3 km).
+- **Replan a real drive**: elige un rango de conducciones reales y pulsa *Load these drives*;
+  el inicio y el destino son los extremos reales y la ruta del rover se compara con cada plan.
+- O pulsa **Set start (A)** y **Set goal (B)** y haz clic en el mapa.
+- Capas: *Relief* (relieve), *Risk* (clases de riesgo), *Slope* (pendiente), *Roughness* (rugosidad).
+- A la derecha, el **modelo de costes** (supuestos ajustables), los **planificadores** y *Plan routes*.
+  Verás la tabla comparativa, el perfil de elevación (pasa el ratón) y *Why this route*.
+- *Assumptions and limitations*: qué supone el modelo y qué no puede ver (rocas < 1 m).
+
 **Ampliar el archivo de imágenes desde la terminal** (en `backend/`):
 ```powershell
 uv run mars-ingest images --sol 1201 --camera NAVCAM_LEFT --limit 20
@@ -211,7 +223,7 @@ el registro original de la NASA, sin modificar.
 .\scripts\check.ps1 -Live  # además, 3 tests contra los servidores reales de la NASA
 ```
 
-**Qué deberías ver:** `All checks passed.` (backend: 88 tests; frontend: 55 tests).
+**Qué deberías ver:** `All checks passed.` (backend: 125 tests; frontend: 63 tests).
 
 Por separado:
 ```powershell

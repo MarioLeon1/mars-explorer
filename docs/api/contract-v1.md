@@ -214,3 +214,22 @@ are `"user_generated"`. Coordinates of detections are pixels of the analysed ren
   "layers": [ { "name": "edges", "label": "…", "url": "/api/vision/analyses/…/layers/edges.png" } ],
   "score_definition": "…" | null, "limitations": ["…"], "created_at": "…Z" }
 ```
+
+---
+
+# v1.3 additions (Phase 4: Terrain & Navigation) — backwards compatible
+
+Coordinates are easting/northing (metres) in the PLACES DEM projection (`{e, n}`).
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/terrain/status` | DEM availability, size, extent, lon/lat bounds, elevation range, validation vs. real localizations, source; `how_to_get` if missing |
+| GET | `/api/terrain/overview.png` | whole-DEM shaded relief at 10 m/px |
+| GET | `/api/terrain/drives?step_m=10` | real drive paths (index, sol, RMCs, length, thinned points) |
+| POST | `/api/terrain/maps` | `{center:{e,n}, size_m 100–3000, cost_model?}` or `{drives:[first,last], margin_m?, cost_model?}` → `TerrainMap` (layers hillshade/slope/roughness/risk with legends, stats, drives in view, assumptions, limitations); 503 `terrain_not_available` |
+| GET | `/api/terrain/maps/{id}/layers/{name}.png` | layer PNG |
+| POST | `/api/navigation/plans` | `{map: MapRequest, start?, goal?, planners[], rrt_seed, rrt_iterations}` → routes (+ `actual` when planning over drives), metrics, profiles, `best`, `explanation` |
+
+`cost_model`: `{max_slope_deg 5–45 (30), slope_weight 0–20 (4), max_roughness_m 0.05–2 (0.30), roughness_weight 0–20 (3)}`.
+Route `kind`: `deterministic` (A*, Dijkstra, Theta*), `randomized` (RRT*, with `extra.seed`), `real_observation` (the rover's drive).
+Metrics: `length_m, impassable_m, cost (null if blocked), cost_distance/slope/roughness, max/mean_slope_deg, max_roughness_m, elevation_gain/loss_m, min_clearance_m, profile [[distance, elevation]]`.

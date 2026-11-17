@@ -178,3 +178,22 @@ class Annotation(SQLModel, table=True):
     y: float
     label: str = "rock"
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class TraverseSegment(SQLModel, table=True):
+    """One real drive as published by JPL MMGIS (dense polyline, ~1 m vertex spacing).
+
+    ``points`` are [easting, northing, elevation] in the PLACES DEM projection (metres)."""
+
+    __tablename__ = "traverse_segments"
+
+    id: int | None = Field(default=None, primary_key=True)
+    source_index: int = Field(index=True)
+    sol: int = Field(index=True)
+    from_rmc: str | None = None
+    to_rmc: str | None = None
+    length_m: float | None = None
+    sclk_start: float | None = None
+    sclk_end: float | None = None
+    points: list[list[float | None]] = Field(default_factory=list, sa_column=Column(JSON))
+    retrieved_at: datetime = Field(default_factory=utcnow)

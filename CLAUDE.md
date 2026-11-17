@@ -12,7 +12,9 @@ The user is the project owner (CS background, new to robotics/planetary science)
   - `ingest/` NASA clients (raw-images feed, MMGIS waypoints), downloader, CLI `mars-ingest`
   - `api/` FastAPI app + routers (contract: `docs/api/contract-v1.md`)
   - `vision/` classical CV: method registry (`methods.py`), detectors, texture, ORB matching, evaluation, benchmark CLI `mars-vision`
-  - later: `terrain/`, `navigation/`, `replay/`, `assistant/`
+  - `terrain/` PLACES 1 m DEM reader (memmap), derived layers, map service, CLI `mars-terrain`
+  - `navigation/` grid planners (A*, Dijkstra, Lazy Theta*, k-nearest RRT*), metrics, explanations
+  - later: `replay/`, `assistant/`
 - `frontend/` — Vite + React 19 + TypeScript. `src/design-system/` (tokens, primitives), `src/modules/<module>/`, `src/api/` (typed client mirroring the contract). Vite proxies `/api` → `127.0.0.1:8000`.
 - `data/` — local only (gitignored): `mars.db`, `images/`, later `terrain/`.
 - `docs/` — `SETUP.md` (step-by-step guide), `ARCHITECTURE.md`, `api/`, `research/`.
@@ -26,6 +28,8 @@ uv run pytest -m live                     # opt-in tests against real NASA endpo
 uv run ruff check . ; uv run ruff format .
 uv run mars-ingest seed                   # download curated real image set + waypoints
 uv run mars-vision benchmark              # perception benchmark -> docs/benchmarks/
+uv run mars-terrain fetch                 # download the 1 m orbital DEM (~325 MB, resumable)
+uv run mars-terrain status                # DEM validation against real localizations
 uv run uvicorn mars_explorer.api.app:app --reload --port 8000
 # frontend (run inside frontend/)
 npm install ; npm run dev ; npm test ; npm run build ; npm run lint
@@ -66,6 +70,7 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
 - CV: see `.claude/skills/computer-vision` + `docs/perception.md`. Bump `vision.ALGORITHM_VERSION` when an algorithm changes (analysis cache key).
 - Windows console is cp1252: CLI output must stay ASCII (files are UTF-8).
 - `.visually-hidden` must keep `top/left: 0` or hidden text stretches the document.
+- Terrain/navigation: see `.claude/skills/autonomous-navigation` + `docs/terrain-navigation.md`.
 
 ## Status
 - Phase 0 (env, repo, skeleton) — done 2026-11-16.
@@ -75,4 +80,6 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
   Backend 62 tests + 3 live; frontend 47 tests.
 - Phase 3 (Perception, contract v1.2, annotations + evaluation, benchmark) — done 2026-11-17.
   Backend 88 tests + 3 live; frontend 55 tests.
-- Next: Phase 4 Terrain & Navigation (PLACES 1 m DEM tiles, slope/roughness cost maps, A*/Dijkstra/Theta*/RRT*).
+- Phase 4 (Terrain & Navigation, contract v1.3, real drive replanning) — done 2026-11-17.
+  Backend 125 tests + 3 live; frontend 63 tests.
+- Next: Phase 5 Mission Replay + optional AI assistant.

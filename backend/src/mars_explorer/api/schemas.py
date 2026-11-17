@@ -447,3 +447,125 @@ class BenchmarkOut(ApiModel):
     methods: list[MethodBenchmarkOut]
     agreement_f1: Summary | None
     notes: list[str]
+
+
+# ---- Contract v1.3 (Phase 4: Terrain & Navigation) ---------------------------------------------
+
+
+class EN(BaseModel):
+    """A point in the PLACES DEM projection (metres): easting, northing."""
+
+    e: float
+    n: float
+
+
+class CostModelIn(BaseModel):
+    max_slope_deg: float = Field(default=30.0, ge=5, le=45)
+    slope_weight: float = Field(default=4.0, ge=0, le=20)
+    max_roughness_m: float = Field(default=0.30, ge=0.05, le=2.0)
+    roughness_weight: float = Field(default=3.0, ge=0, le=20)
+
+
+class MapRequest(BaseModel):
+    center: EN | None = None
+    size_m: float = Field(default=800, ge=100, le=3000)
+    drives: tuple[int, int] | None = None  # (first, last) drive indices; overrides center/size
+    margin_m: float = Field(default=120, ge=20, le=500)
+    cost_model: CostModelIn = Field(default_factory=CostModelIn)
+
+
+class LegendItem(ApiModel):
+    label: str
+    color: str
+
+
+class TerrainLayer(ApiModel):
+    name: str
+    label: str
+    url: str
+    legend: list[LegendItem]
+
+
+class Extent(ApiModel):
+    e_min: float
+    e_max: float
+    n_min: float
+    n_max: float
+
+
+class DrivePath(ApiModel):
+    index: int
+    sol: int
+    from_rmc: str | None
+    to_rmc: str | None
+    length_m: float | None
+    points: list[list[float]]
+
+
+class TerrainMapOut(ApiModel):
+    id: str
+    center: EN
+    size_m: int
+    cell_m: int
+    grid: list[int]
+    extent: Extent
+    cost_model: dict[str, float]
+    layers: list[TerrainLayer]
+    stats: dict[str, Any]
+    drives_in_view: list[DrivePath]
+    provenance: Provenance
+    assumptions: list[str]
+    limitations: list[str]
+
+
+class PlanRequest(BaseModel):
+    map: MapRequest
+    start: EN | None = None
+    goal: EN | None = None
+    planners: list[str] = Field(
+        default_factory=lambda: ["astar", "dijkstra", "theta_star", "rrt_star"]
+    )
+    rrt_seed: int = Field(default=42, ge=0, le=2**31 - 1)
+    rrt_iterations: int = Field(default=3000, ge=200, le=10000)
+
+
+class RouteMetricsOut(ApiModel):
+    feasible: bool
+    length_m: float
+    impassable_m: float
+    cost: float | None
+    cost_distance: float
+    cost_slope: float
+    cost_roughness: float
+    max_slope_deg: float
+    mean_slope_deg: float
+    max_roughness_m: float
+    elevation_gain_m: float
+    elevation_loss_m: float
+    min_clearance_m: float | None
+    profile: list[list[float]]
+
+
+class RouteOut(ApiModel):
+    planner: str
+    title: str
+    kind: Literal["deterministic", "randomized", "real_observation"]
+    found: bool
+    reason: str | None
+    points: list[list[float]]
+    metrics: RouteMetricsOut | None
+    expanded: int
+    elapsed_ms: float
+    extra: dict[str, float | int]
+
+
+class PlanOut(ApiModel):
+    map: TerrainMapOut
+    start: EN
+    goal: EN
+    snapped: bool
+    routes: list[RouteOut]
+    actual: RouteOut | None
+    best: str | None
+    explanation: list[str]
+    provenance: Provenance

@@ -31,8 +31,18 @@ class Settings(BaseSettings):
 
     raw_feed_url: str = "https://mars.nasa.gov/rss/api/"
     mmgis_waypoints_url: str = "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json"
+    mmgis_traverse_url: str = "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_traverse.json"
 
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    places_dem_url: str = (
+        "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/"
+        "data_maps/m20_orbital_dem.img"
+    )
+    places_dem_label_url: str = (
+        "https://pds-geosciences.wustl.edu/m2020/urn-nasa-pds-mars2020_rover_places/"
+        "data_maps/m20_orbital_dem.xml"
+    )
 
     @property
     def database_path(self) -> Path:
@@ -41,6 +51,10 @@ class Settings(BaseSettings):
     @property
     def images_dir(self) -> Path:
         return self.data_dir / "images" / "m2020"
+
+    @property
+    def terrain_dir(self) -> Path:
+        return self.data_dir / "terrain"
 
 
 @lru_cache

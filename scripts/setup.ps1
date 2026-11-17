@@ -6,8 +6,9 @@
 .EXAMPLE
   .\scripts\setup.ps1          # install dependencies
   .\scripts\setup.ps1 -Seed    # ...and download ~13 MB of real Perseverance data
+  .\scripts\setup.ps1 -Seed -Terrain   # ...plus the 1 m orbital DEM (~325 MB, resumable)
 #>
-param([switch]$Seed)
+param([switch]$Seed, [switch]$Terrain)
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -46,6 +47,12 @@ if ($Seed) {
     Step 'Downloading the curated set of real Perseverance data (NASA/JPL-Caltech)'
     Push-Location (Join-Path $root 'backend')
     try { uv run mars-ingest seed } finally { Pop-Location }
+}
+
+if ($Terrain) {
+    Step 'Downloading the Mars 2020 PLACES orbital DEM (~325 MB, NASA PDS)'
+    Push-Location (Join-Path $root 'backend')
+    try { uv run mars-terrain fetch } finally { Pop-Location }
 }
 
 Write-Host "`nSetup complete." -ForegroundColor Green

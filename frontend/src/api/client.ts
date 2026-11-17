@@ -1,5 +1,11 @@
 import type {
   Annotation,
+  DrivePath,
+  MapRequest,
+  Plan,
+  PlanRequest,
+  TerrainMap,
+  TerrainStatus,
   ApiErrorBody,
   Benchmark,
   Evaluation,
@@ -182,6 +188,10 @@ export const api = {
   deleteAnnotation: (id: number) => request<void>(`/api/annotations/${id}`, { method: 'DELETE' }),
   match: (imageA: string, imageB: string) =>
     request<MatchResult>('/api/vision/match', { method: 'POST', body: { image_a: imageA, image_b: imageB } }),
+  terrainStatus: (signal?: AbortSignal) => request<TerrainStatus>('/api/terrain/status', signal),
+  drives: (stepM: number, signal?: AbortSignal) => request<DrivePath[]>(`/api/terrain/drives?step_m=${stepM}`, signal),
+  terrainMap: (body: MapRequest) => request<TerrainMap>('/api/terrain/maps', { method: 'POST', body }),
+  plan: (body: PlanRequest) => request<Plan>('/api/navigation/plans', { method: 'POST', body }),
   benchmark: (cameras: string[], limit: number) =>
     request<Benchmark>('/api/vision/benchmark', { method: 'POST', body: { cameras, limit } }),
 }

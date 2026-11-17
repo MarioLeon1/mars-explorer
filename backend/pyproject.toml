@@ -18,6 +18,7 @@ dependencies = [
 [project.scripts]
 mars-ingest = "mars_explorer.ingest.cli:main"
 mars-vision = "mars_explorer.vision.cli:main"
+mars-terrain = "mars_explorer.terrain.cli:main"
 
 [build-system]
 requires = ["hatchling"]

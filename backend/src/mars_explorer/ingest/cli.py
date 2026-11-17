@@ -20,7 +20,14 @@ from sqlmodel import Session, select
 
 from mars_explorer.core.config import Settings, get_settings
 from mars_explorer.core.logging import configure_logging
-from mars_explorer.db.models import FeedStatus, ImageFile, ImageRecord, IngestRun, Waypoint
+from mars_explorer.db.models import (
+    FeedStatus,
+    ImageFile,
+    ImageRecord,
+    IngestRun,
+    TraverseSegment,
+    Waypoint,
+)
 from mars_explorer.db.session import make_engine
 from mars_explorer.ingest.cameras import CATALOG
 from mars_explorer.ingest.downloader import ImageSize
@@ -50,12 +57,14 @@ def _print_status(settings: Settings) -> None:
         files = session.exec(select(func.count()).select_from(ImageFile)).one()
         size = session.exec(select(func.coalesce(func.sum(ImageFile.bytes), 0))).one()
         waypoints = session.exec(select(func.count()).select_from(Waypoint)).one()
+        drives = session.exec(select(func.count()).select_from(TraverseSegment)).one()
         feed = session.get(FeedStatus, 1)
         last = session.exec(select(IngestRun).order_by(IngestRun.id.desc())).first()  # type: ignore[union-attr]
     print(f"Data directory : {settings.data_dir}")
     print(f"Images         : {images} records across {sols} sols")
     print(f"Cached files   : {files} ({size / 1_048_576:.1f} MB)")
     print(f"Waypoints      : {waypoints} real localizations")
+    print(f"Drive paths    : {drives} real drives (JPL MMGIS traverse)")
     if feed:
         print(
             f"NASA feed      : latest sol {feed.latest_sol}, {feed.total_images} images "
@@ -83,7 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     images.add_argument("--limit", type=int, default=50, help="max records (default 50)")
     images.add_argument("--full-res", action="store_true", help="also download full PNGs")
-    sub.add_parser("waypoints", help="refresh real rover localizations (JPL MMGIS)")
+    sub.add_parser("waypoints", help="refresh real rover localizations + drive paths (JPL MMGIS)")
     sub.add_parser("status", help="show what is stored locally")
     return parser
 
@@ -111,6 +120,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print("Seeding a curated set of real Perseverance images (NASA/JPL-Caltech)...")
             runs.append(service.ingest_images(seed_selections(), kind="seed"))
             runs.append(service.ingest_waypoints())
+            runs.append(service.ingest_traverse())
         elif args.command == "images":
             sizes: tuple[ImageSize, ...] = (
                 ("small", "large", "full_res") if args.full_res else ("small", "large")
@@ -121,6 +131,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             runs.append(service.ingest_images([selection], sizes=sizes))
         elif args.command == "waypoints":
             runs.append(service.ingest_waypoints())
+            runs.append(service.ingest_traverse())
 
     print("\nSummary")
     for run in runs:

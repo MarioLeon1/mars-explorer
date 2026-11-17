@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from mars_explorer import __version__
-from mars_explorer.api.routers import images, ingest, meta, rover, system, vision
+from mars_explorer.api.routers import images, ingest, meta, rover, system, terrain, vision
 from mars_explorer.core.config import Settings, get_settings
 from mars_explorer.core.errors import AppError
 from mars_explorer.core.logging import configure_logging
@@ -24,6 +24,8 @@ from mars_explorer.db.session import make_engine
 from mars_explorer.ingest.downloader import ImageDownloader
 from mars_explorer.ingest.http import make_http_client
 from mars_explorer.ingest.jobs import JobManager
+from mars_explorer.terrain.dem import PLACES_DEM, DemSpec
+from mars_explorer.terrain.service import TerrainService
 from mars_explorer.vision.service import VisionService
 
 log = logging.getLogger(__name__)
@@ -34,7 +36,9 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 
 
 def create_app(
-    settings: Settings | None = None, transport: httpx.BaseTransport | None = None
+    settings: Settings | None = None,
+    transport: httpx.BaseTransport | None = None,
+    dem_spec: DemSpec = PLACES_DEM,
 ) -> FastAPI:
     """Build the app. ``transport`` lets tests replace all outbound HTTP (NASA downloads)."""
     settings = settings or get_settings()
@@ -48,6 +52,7 @@ def create_app(
         app.state.downloader = ImageDownloader(app.state.http, settings)
         app.state.jobs = JobManager(app.state.engine, settings, transport=transport)
         app.state.vision = VisionService(app.state.engine, settings, app.state.downloader)
+        app.state.terrain = TerrainService(settings, app.state.engine, dem_spec)
         log.info("Mars Explorer API %s — data dir %s", __version__, settings.data_dir)
         yield
         app.state.jobs.shutdown()
@@ -84,6 +89,7 @@ def create_app(
         rover.router,
         system.router,
         vision.router,
+        terrain.router,
     ):
         app.include_router(router, prefix="/api")
     return app

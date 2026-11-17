@@ -22,9 +22,9 @@ cost maps and explainable autonomous route planning.
 | 0 | Environment, repository, architecture | done |
 | 1 | Ingestion pipeline, REST API, Mission Control UI | done |
 | 2 | Explorer: filters, zoom viewer, stereo pairs, comparison, chronology, UI ingestion | done |
-| 3 | Perception: CLAHE, edges, 2 rock-candidate detectors, texture, ORB stereo matching, human-annotation evaluation, benchmark | **done** |
-| 4 | Terrain (real 1 m DEM) + route planning (A*, Dijkstra, Theta*, RRT*) | next |
-| 5 | Mission replay + optional AI assistant | planned |
+| 3 | Perception: CLAHE, edges, 2 rock-candidate detectors, texture, ORB stereo matching, human-annotation evaluation, benchmark | done |
+| 4 | Real 1 m orbital DEM, calibrated cost maps, A* / Dijkstra / Theta* / RRT* compared with the rover's real drives | **done** |
+| 5 | Mission replay + optional AI assistant | next |
 | 6 | Portfolio polish, E2E tests, case study | planned |
 
 ## Architecture
@@ -55,7 +55,14 @@ Perception benchmark (writes [docs/benchmarks/perception-benchmark.md](docs/benc
 cd backend; uv run mars-vision benchmark
 ```
 
-Engineering notes and real-data findings: [docs/perception.md](docs/perception.md).
+Engineering notes and real-data findings: [docs/perception.md](docs/perception.md),
+[docs/terrain-navigation.md](docs/terrain-navigation.md).
+
+Terrain (one-time, ~325 MB from NASA PDS):
+
+```powershell
+cd backend; uv run mars-terrain fetch; uv run mars-terrain status
+```
 
 Ingest more data:
 
@@ -74,6 +81,8 @@ API documentation (OpenAPI) is served at http://127.0.0.1:8000/docs while the ba
 |---|---|---|
 | NASA Mars 2020 raw-images JSON feed (`mars.nasa.gov/rss/api`) | images + metadata | undocumented; parsed defensively; ≤100 per page |
 | JPL MMGIS `M20_waypoints.json` | real rover localizations | `-9999` and mid-drive `0.0` odometry treated as missing |
+| JPL MMGIS `M20_traverse.json` | real drive paths (~1 m vertices) | replanning endpoints and comparison |
+| PDS PLACES `m20_orbital_dem` | 1 m orbital DEM (324.5 MB) | georeferencing validated against 708 localizations (median 0.002 m) |
 | `api.nasa.gov/mars-photos` | — | **discontinued (HTTP 404)**; not used |
 
 Feed quirks handled: a literal `|` in the query → HTTP 400; an unknown `id=` silently returns the

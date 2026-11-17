@@ -61,6 +61,8 @@ class FakeNasa:
         url = request.url
         if url.path == "/rss/api/":
             return self._feed(request)
+        if url.path.endswith("M20_traverse.json"):
+            return httpx.Response(200, json=load_fixture("mmgis_traverse_sample.json"))
         if url.path.endswith("M20_waypoints.json"):
             return httpx.Response(200, json=load_fixture("mmgis_waypoints_sample.json"))
         if "/mars2020-raw-images/" in url.path:

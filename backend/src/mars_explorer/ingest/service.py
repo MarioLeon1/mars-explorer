@@ -17,6 +17,7 @@ from mars_explorer.db.models import (
     FeedStatus,
     ImageRecord,
     IngestRun,
+    TraverseSegment,
     Waypoint,
     utcnow,
 )
@@ -24,6 +25,7 @@ from mars_explorer.ingest.downloader import ImageDownloader, ImageSize
 from mars_explorer.ingest.http import get_with_retries
 from mars_explorer.ingest.parse import ParseError, parse_raw_image
 from mars_explorer.ingest.raw_feed import MAX_PAGE_SIZE, FeedQuery, RawImagesClient
+from mars_explorer.ingest.traverse import parse_traverse
 from mars_explorer.ingest.waypoints import parse_waypoints
 
 log = logging.getLogger(__name__)
@@ -164,6 +166,38 @@ class IngestService:
             totals.errors.append(f"unexpected error: {exc!r}")
             self._finish_run(run, totals)
             raise
+        return self._finish_run(run, totals)
+
+    def ingest_traverse(self) -> IngestRun:
+        """Dense real drive paths (replaces the table: the source is authoritative)."""
+        totals = RunTotals()
+        run = self._start_run("traverse", {"url": self._settings.mmgis_traverse_url})
+        try:
+            self._progress("rover drive paths (JPL MMGIS)")
+            response = get_with_retries(
+                self._http,
+                self._settings.mmgis_traverse_url,
+                max_retries=self._settings.max_retries,
+                sleep=self._sleep,
+            )
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise AppError("MMGIS traverse returned non-JSON content") from exc
+            drives = parse_traverse(payload)
+            totals.items_seen = len(payload.get("features", []))
+            totals.items_skipped = totals.items_seen - len(drives)
+            retrieved = utcnow()
+            with Session(self._engine) as session:
+                session.exec(delete(TraverseSegment))  # type: ignore[call-overload]
+                for drive in drives:
+                    session.add(TraverseSegment(**drive.model_dump(), retrieved_at=retrieved))
+                session.commit()
+            totals.items_added = len(drives)
+        except AppError as exc:
+            totals.items_failed += 1
+            totals.errors.append(exc.message)
+            log.error("traverse ingest failed: %s", exc.message)
         return self._finish_run(run, totals)
 
     # ---- internals ---------------------------------------------------------------------

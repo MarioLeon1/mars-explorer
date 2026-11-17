@@ -62,14 +62,9 @@ export const MODULES: ModuleDef[] = [
     short: 'Terrain',
     icon: <IconTerrain />,
     phase: 4,
-    available: false,
+    available: true,
     description: 'Cost maps on real orbital elevation data and explainable route planning.',
-    plan: [
-      'Real 1 m/px orbital DEM of the traverse area (PDS PLACES), slope and roughness layers',
-      'Cost maps and risk classes with clearly stated assumptions',
-      'A*, Dijkstra, Theta* and RRT* planners compared side by side',
-      'Planned routes overlaid on the real Perseverance traverse, with cost breakdowns',
-    ],
+    plan: [],
   },
   {
     id: 'replay',

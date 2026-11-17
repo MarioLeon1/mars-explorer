@@ -363,3 +363,141 @@ export interface Benchmark {
   agreement_f1: StatSummary | null
   notes: string[]
 }
+
+// ---- Contract v1.3 (Phase 4: Terrain & Navigation) -------------------------------------------
+
+/** A point in the PLACES DEM projection (metres). */
+export interface EN {
+  e: number
+  n: number
+}
+
+export interface Extent {
+  e_min: number
+  e_max: number
+  n_min: number
+  n_max: number
+}
+
+export interface CostModel {
+  max_slope_deg: number
+  slope_weight: number
+  max_roughness_m: number
+  roughness_weight: number
+}
+
+export interface TerrainStatus {
+  available: boolean
+  rows: number
+  cols: number
+  cell_m: number
+  extent: Extent
+  bounds_deg: { lon_min: number; lon_max: number; lat_min: number; lat_max: number }
+  validation?: { waypoints: number; inside: number; compared: number; median_offset_m?: number; p95_abs_offset_m?: number }
+  elevation_m?: { min: number; max: number }
+  source: { name: string; url: string; credit: string }
+  provenance: Provenance
+  notes: string[]
+  how_to_get: string | null
+}
+
+export interface DrivePath {
+  index: number
+  sol: number
+  from_rmc: string | null
+  to_rmc: string | null
+  length_m: number | null
+  points: [number, number][]
+}
+
+export interface TerrainLayer {
+  name: 'hillshade' | 'slope' | 'roughness' | 'risk'
+  label: string
+  url: string
+  legend: { label: string; color: string }[]
+}
+
+export interface TerrainMap {
+  id: string
+  center: EN
+  size_m: number
+  cell_m: number
+  grid: [number, number]
+  extent: Extent
+  cost_model: Record<string, number>
+  layers: TerrainLayer[]
+  stats: {
+    slope_p50_deg: number | null
+    slope_p95_deg: number | null
+    slope_max_deg: number | null
+    roughness_p95_m: number | null
+    elevation_min_m: number
+    elevation_max_m: number
+    risk_fraction: Record<'low' | 'moderate' | 'high' | 'impassable', number>
+  }
+  drives_in_view: DrivePath[]
+  provenance: Provenance
+  assumptions: string[]
+  limitations: string[]
+}
+
+export interface MapRequest {
+  center?: EN
+  size_m?: number
+  drives?: [number, number]
+  margin_m?: number
+  cost_model?: CostModel
+}
+
+export type PlannerName = 'astar' | 'dijkstra' | 'theta_star' | 'rrt_star'
+
+export interface RouteMetrics {
+  feasible: boolean
+  length_m: number
+  impassable_m: number
+  cost: number | null
+  cost_distance: number
+  cost_slope: number
+  cost_roughness: number
+  max_slope_deg: number
+  mean_slope_deg: number
+  max_roughness_m: number
+  elevation_gain_m: number
+  elevation_loss_m: number
+  min_clearance_m: number | null
+  profile: [number, number][]
+}
+
+export interface PlannedRoute {
+  planner: PlannerName | 'actual'
+  title: string
+  kind: 'deterministic' | 'randomized' | 'real_observation'
+  found: boolean
+  reason: string | null
+  points: [number, number][]
+  metrics: RouteMetrics | null
+  expanded: number
+  elapsed_ms: number
+  extra: Record<string, number>
+}
+
+export interface Plan {
+  map: TerrainMap
+  start: EN
+  goal: EN
+  snapped: boolean
+  routes: PlannedRoute[]
+  actual: PlannedRoute | null
+  best: PlannerName | null
+  explanation: string[]
+  provenance: Provenance
+}
+
+export interface PlanRequest {
+  map: MapRequest
+  start?: EN
+  goal?: EN
+  planners: PlannerName[]
+  rrt_seed: number
+  rrt_iterations: number
+}
