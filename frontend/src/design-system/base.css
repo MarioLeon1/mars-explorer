@@ -66,6 +66,10 @@ img {
 
 .visually-hidden {
   position: absolute;
+  /* Anchor explicitly: without a positioned ancestor, an absolute element sits at its static
+     position, which inside scrolled panels can lie far below and stretch the document. */
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;

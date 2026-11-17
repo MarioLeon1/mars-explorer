@@ -959,3 +959,26 @@
 .cmp__modes {
   flex: none;
 }
+
+.zv__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.zv__stage.is-click-mode {
+  cursor: crosshair;
+}
+
+.xd__perception {
+  margin-left: auto;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.xd__perception + .xd__nav {
+  margin-left: var(--s-3);
+}

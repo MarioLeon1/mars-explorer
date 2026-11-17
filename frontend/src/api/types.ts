@@ -231,3 +231,135 @@ export interface IngestJobRequest {
   limit: number
   full_res: boolean
 }
+
+// ---- Contract v1.2 (Phase 3: Perception) ---------------------------------------------------
+
+export type ParamValue = number | boolean | string
+
+export interface ParamSpec {
+  name: string
+  label: string
+  type: 'int' | 'float' | 'bool' | 'choice'
+  default: ParamValue
+  help: string
+  min: number | null
+  max: number | null
+  step: number | null
+  choices: string[]
+}
+
+export interface VisionMethod {
+  name: string
+  title: string
+  category: 'enhancement' | 'structure' | 'detection' | 'segmentation' | 'features'
+  kind: 'algorithmic'
+  summary: string
+  params: ParamSpec[]
+  limitations: string[]
+  score_definition: string | null
+  experimental: boolean
+  produces_detections: boolean
+}
+
+export interface Detection {
+  /** centre and radius in pixels of the analysed rendition */
+  x: number
+  y: number
+  r: number
+  score: number
+  area_px: number
+}
+
+export interface VisionAnalysis {
+  id: string
+  image_id: string
+  method: string
+  title: string
+  method_kind: 'algorithmic'
+  provenance: Provenance
+  rendition: string
+  params: Record<string, ParamValue>
+  algorithm_version: string
+  width: number
+  height: number
+  timings_ms: Record<string, number>
+  stats: Record<string, number | string>
+  detections: Detection[] | null
+  layers: { name: string; label: string; url: string }[]
+  score_definition: string | null
+  limitations: string[]
+  created_at: IsoUtc
+}
+
+export interface Annotation {
+  id: number
+  image_id: string
+  /** fractions of image width / height */
+  x: number
+  y: number
+  label: string
+  provenance: Provenance
+  created_at: IsoUtc
+}
+
+export interface Evaluation {
+  analysis_id: string
+  annotations: number
+  detections: number
+  true_positives: number
+  false_positives: number
+  false_negatives: number
+  precision: number | null
+  recall: number | null
+  f1: number | null
+  tolerance_px: number
+  matching: string
+  caveats: string[]
+}
+
+export interface MatchResult {
+  image_a: string
+  image_b: string
+  stereo_pair: boolean
+  width_a: number
+  height_a: number
+  width_b: number
+  height_b: number
+  keypoints_a: number
+  keypoints_b: number
+  tentative: number
+  inliers: number
+  inlier_ratio: number | null
+  disparity: Record<string, number>
+  matches: { ax: number; ay: number; bx: number; by: number; inlier: boolean }[]
+  elapsed_ms: number
+  provenance: Provenance
+  notes: string[]
+}
+
+export interface StatSummary {
+  mean: number
+  median: number
+  p95: number
+}
+
+export interface Benchmark {
+  images: number
+  cameras: string[]
+  methods: {
+    method: string
+    title: string
+    images: number
+    runtime_ms: StatSummary | null
+    candidates: StatSummary | null
+    annotated_images: number
+    true_positives: number
+    false_positives: number
+    false_negatives: number
+    precision: number | null
+    recall: number | null
+    f1: number | null
+  }[]
+  agreement_f1: StatSummary | null
+  notes: string[]
+}

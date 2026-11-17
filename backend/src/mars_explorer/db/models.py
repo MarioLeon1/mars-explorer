@@ -144,3 +144,37 @@ class FeedStatus(SQLModel, table=True):
     latest_sol: int | None = None
     total_images: int | None = None
     checked_at: datetime = Field(default_factory=utcnow)
+
+
+class VisionAnalysis(SQLModel, table=True):
+    """A cached perception result (derived data). Id = hash of inputs + algorithm version."""
+
+    __tablename__ = "vision_analyses"
+
+    id: str = Field(primary_key=True)
+    image_id: str = Field(index=True, foreign_key="images.image_id")
+    method: str = Field(index=True)
+    rendition: str
+    params: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    algorithm_version: str
+    width: int
+    height: int
+    timings_ms: dict[str, float] = Field(default_factory=dict, sa_column=Column(JSON))
+    stats: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    detections: list[dict[str, float]] | None = Field(default=None, sa_column=Column(JSON))
+    layers: list[dict[str, str]] = Field(default_factory=list, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class Annotation(SQLModel, table=True):
+    """A point marked by the user on an image (user_generated). Coordinates are fractions of
+    the image width/height so they are independent of the rendition."""
+
+    __tablename__ = "annotations"
+
+    id: int | None = Field(default=None, primary_key=True)
+    image_id: str = Field(index=True, foreign_key="images.image_id")
+    x: float
+    y: float
+    label: str = "rock"
+    created_at: datetime = Field(default_factory=utcnow)

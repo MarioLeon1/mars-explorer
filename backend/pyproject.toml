@@ -7,6 +7,8 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
     "fastapi>=0.163",
     "httpx>=0.28",
+    "numpy>=2.1",
+    "opencv-python-headless>=4.10",
     "pydantic>=2.14",
     "pydantic-settings>=2.6",
     "sqlmodel>=0.0.24",
@@ -15,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 mars-ingest = "mars_explorer.ingest.cli:main"
+mars-vision = "mars_explorer.vision.cli:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -38,6 +41,8 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# Mathematical notation (×, −, σ, ÷) is intentional in scientific docstrings/messages.
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [dependency-groups]
 dev = [

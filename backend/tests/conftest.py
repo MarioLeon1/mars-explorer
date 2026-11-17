@@ -52,6 +52,8 @@ class FakeNasa:
         }
         self.requests: list[httpx.Request] = []
         self.fail_files = False
+        # When set, every image file request returns these bytes (a decodable synthetic scene).
+        self.image_bytes: bytes | None = None
         self.feed_status = 200
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
@@ -64,6 +66,10 @@ class FakeNasa:
         if "/mars2020-raw-images/" in url.path:
             if self.fail_files:
                 return httpx.Response(404, text="missing")
+            if self.image_bytes is not None:
+                return httpx.Response(
+                    200, content=self.image_bytes, headers={"content-type": "image/jpeg"}
+                )
             if url.path.endswith(".png"):
                 return httpx.Response(200, content=PNG_BYTES, headers={"content-type": "image/png"})
             return httpx.Response(200, content=JPEG_BYTES, headers={"content-type": "image/jpg"})

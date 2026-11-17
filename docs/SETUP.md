@@ -170,6 +170,22 @@ cada endpoint con *Try it out* y ver el JSON real.
 - **Add data from NASA** (abajo a la izquierda): elige sol y cámaras, pulsa *Check NASA* para ver
   cuántas imágenes existen y *Download* para descargarlas en segundo plano con barra de progreso.
 
+**En Perception** (menú izquierdo → *Vision*):
+- Elige una imagen (o pulsa *Analyze in Perception* desde el Explorer).
+- A la izquierda, los **métodos**: candidatos a roca (dos detectores distintos), realce CLAHE,
+  bordes, clases de textura (experimental) y puntos ORB. Cada uno se ejecuta al seleccionarlo.
+- A la derecha, los **parámetros** (con su explicación) y *Run*; debajo, resultados, tiempos,
+  la **definición de la puntuación** (no es una probabilidad) y las **limitaciones**.
+- Abajo, **Layers**: activa/desactiva capas y ajusta su opacidad.
+- **Evaluar un detector**: pulsa *Mark rocks* y haz clic en el centro de cada roca que
+  consideres obstáculo (marca todas las de la zona). Verás precisión, recall y F1 frente a
+  *tu* interpretación. *Undo last* / *Clear all* para corregir.
+- **Stereo match** (arriba): si la pareja estéreo está guardada (*Fetch from NASA* en Explorer),
+  empareja rasgos entre los dos ojos y mide la disparidad en píxeles.
+- En la página inicial de Perception, *Run benchmark* compara los dos detectores en 40 imágenes.
+  Desde la terminal: `cd backend; uv run mars-vision benchmark` (escribe el informe en
+  `docs/benchmarks/perception-benchmark.md`).
+
 **Ampliar el archivo de imágenes desde la terminal** (en `backend/`):
 ```powershell
 uv run mars-ingest images --sol 1201 --camera NAVCAM_LEFT --limit 20
@@ -195,7 +211,7 @@ el registro original de la NASA, sin modificar.
 .\scripts\check.ps1 -Live  # además, 3 tests contra los servidores reales de la NASA
 ```
 
-**Qué deberías ver:** `All checks passed.` (backend: 62 tests; frontend: 47 tests).
+**Qué deberías ver:** `All checks passed.` (backend: 88 tests; frontend: 55 tests).
 
 Por separado:
 ```powershell

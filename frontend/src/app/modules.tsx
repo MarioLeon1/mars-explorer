@@ -51,14 +51,9 @@ export const MODULES: ModuleDef[] = [
     short: 'Vision',
     icon: <IconPerception />,
     phase: 3,
-    available: false,
+    available: true,
     description: 'Computer-vision experiments on raw imagery, with every result labelled by method.',
-    plan: [
-      'Enhancement and filtering pipeline (CLAHE, denoising, edge detection)',
-      'Rock / obstacle candidate detection drawn over the original image',
-      'Terrain segmentation (classical first; optional model trained on AI4Mars)',
-      'Benchmarks comparing algorithms, with honest limitations',
-    ],
+    plan: [],
   },
   {
     id: 'terrain',

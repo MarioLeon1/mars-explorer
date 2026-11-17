@@ -278,3 +278,172 @@ class IngestJob(ApiModel):
     created_at: UtcDateTime
     started_at: UtcDateTime | None
     finished_at: UtcDateTime | None
+
+
+# ---- Contract v1.2 (Phase 3: Perception) -----------------------------------------------------
+
+
+class ParamSpecOut(ApiModel):
+    name: str
+    label: str
+    type: Literal["int", "float", "bool", "choice"]
+    default: int | float | bool | str
+    help: str
+    min: float | None
+    max: float | None
+    step: float | None
+    choices: list[str]
+
+
+class VisionMethod(ApiModel):
+    name: str
+    title: str
+    category: str
+    kind: Literal["algorithmic"]
+    summary: str
+    params: list[ParamSpecOut]
+    limitations: list[str]
+    score_definition: str | None
+    experimental: bool
+    produces_detections: bool
+
+
+class AnalysisRequest(BaseModel):
+    image_id: str
+    method: str
+    params: dict[str, Any] = Field(default_factory=dict)
+    rendition: Literal["large", "full_res"] = "large"
+
+
+class Detection(ApiModel):
+    x: float
+    y: float
+    r: float
+    score: float
+    area_px: float
+
+
+class LayerOut(ApiModel):
+    name: str
+    label: str
+    url: str
+
+
+class VisionAnalysisOut(ApiModel):
+    id: str
+    image_id: str
+    method: str
+    title: str
+    method_kind: Literal["algorithmic"]
+    provenance: Provenance
+    rendition: str
+    params: dict[str, Any]
+    algorithm_version: str
+    width: int
+    height: int
+    timings_ms: dict[str, float]
+    stats: dict[str, Any]
+    detections: list[Detection] | None
+    layers: list[LayerOut]
+    score_definition: str | None
+    limitations: list[str]
+    created_at: UtcDateTime
+
+
+class AnnotationIn(BaseModel):
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    label: Literal["rock"] = "rock"
+
+
+class AnnotationOut(ApiModel):
+    id: int
+    image_id: str
+    x: float
+    y: float
+    label: str
+    provenance: Provenance
+    created_at: UtcDateTime
+
+
+class EvaluationOut(ApiModel):
+    analysis_id: str
+    annotations: int
+    detections: int
+    true_positives: int
+    false_positives: int
+    false_negatives: int
+    precision: float | None
+    recall: float | None
+    f1: float | None
+    tolerance_px: float
+    matching: str
+    caveats: list[str]
+
+
+class MatchRequest(BaseModel):
+    image_a: str
+    image_b: str
+    rendition: Literal["large", "full_res"] = "large"
+
+
+class DrawnMatch(ApiModel):
+    ax: float
+    ay: float
+    bx: float
+    by: float
+    inlier: bool
+
+
+class MatchOut(ApiModel):
+    image_a: str
+    image_b: str
+    stereo_pair: bool
+    width_a: int
+    height_a: int
+    width_b: int
+    height_b: int
+    keypoints_a: int
+    keypoints_b: int
+    tentative: int
+    inliers: int
+    inlier_ratio: float | None
+    disparity: dict[str, float]
+    matches: list[DrawnMatch]
+    elapsed_ms: float
+    provenance: Provenance
+    notes: list[str]
+
+
+class BenchmarkRequest(BaseModel):
+    cameras: list[str] = Field(default_factory=list, max_length=12)
+    limit: int = Field(default=30, ge=1, le=80)
+
+
+class Summary(ApiModel):
+    mean: float
+    median: float
+    p95: float
+
+
+class MethodBenchmarkOut(ApiModel):
+    method: str
+    title: str
+    images: int
+    runtime_ms: Summary | None
+    candidates: Summary | None
+    annotated_images: int
+    true_positives: int
+    false_positives: int
+    false_negatives: int
+    precision: float | None
+    recall: float | None
+    f1: float | None
+
+
+class BenchmarkOut(ApiModel):
+    images: int
+    cameras: list[str]
+    methods: list[MethodBenchmarkOut]
+    agreement_f1: Summary | None
+    notes: list[str]

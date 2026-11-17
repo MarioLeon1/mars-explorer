@@ -21,9 +21,9 @@ cost maps and explainable autonomous route planning.
 |---|---|---|
 | 0 | Environment, repository, architecture | done |
 | 1 | Ingestion pipeline, REST API, Mission Control UI | done |
-| 2 | Explorer: filters, zoom viewer, stereo pairs, comparison, chronology, UI ingestion | **done** |
-| 3 | Perception: OpenCV pipeline, obstacle candidates, segmentation | next |
-| 4 | Terrain (real 1 m DEM) + route planning (A*, Dijkstra, Theta*, RRT*) | planned |
+| 2 | Explorer: filters, zoom viewer, stereo pairs, comparison, chronology, UI ingestion | done |
+| 3 | Perception: CLAHE, edges, 2 rock-candidate detectors, texture, ORB stereo matching, human-annotation evaluation, benchmark | **done** |
+| 4 | Terrain (real 1 m DEM) + route planning (A*, Dijkstra, Theta*, RRT*) | next |
 | 5 | Mission replay + optional AI assistant | planned |
 | 6 | Portfolio polish, E2E tests, case study | planned |
 
@@ -48,6 +48,14 @@ Prerequisites: Git, [uv](https://docs.astral.sh/uv/), Node.js 26 LTS. Full begin
 .\scripts\dev.ps1           # start API + UI and open http://localhost:5173
 .\scripts\check.ps1         # lint, type-check, tests and build
 ```
+
+Perception benchmark (writes [docs/benchmarks/perception-benchmark.md](docs/benchmarks/perception-benchmark.md)):
+
+```powershell
+cd backend; uv run mars-vision benchmark
+```
+
+Engineering notes and real-data findings: [docs/perception.md](docs/perception.md).
 
 Ingest more data:
 
@@ -75,5 +83,5 @@ Details: [docs/research/2026-11-16-data-sources-and-toolchain.md](docs/research/
 
 ## Tech stack
 
-Python 3.13 · FastAPI · SQLModel/SQLite · httpx · pytest · ruff — TypeScript · React 19 · Vite ·
+Python 3.13 · FastAPI · SQLModel/SQLite · httpx · OpenCV · NumPy · pytest · ruff — TypeScript · React 19 · Vite ·
 Vitest · Testing Library · oxlint. No UI framework; custom design system in `frontend/src/design-system`.

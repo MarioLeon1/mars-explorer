@@ -183,3 +183,34 @@ Live count from NASA (cached 10 min) vs. local count.
   "progress": { "seen": 12, "added": 10, "skipped": 2, "failed": 0, "downloaded": 20 },
   "run_id": 7 | null, "error": null, "created_at": "…Z", "started_at": "…Z" | null, "finished_at": "…Z" | null }
 ```
+
+---
+
+# v1.2 additions (Phase 3: Perception) — backwards compatible
+
+All analysis outputs have `provenance: "derived"` and `method_kind: "algorithmic"`; annotations
+are `"user_generated"`. Coordinates of detections are pixels of the analysed rendition
+(`width` × `height`); annotations are fractions (0–1) of width/height.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/vision/methods` | catalogue: params (type, default, min/max/step, choices, help), limitations, `score_definition`, `experimental`, `produces_detections` |
+| POST | `/api/vision/analyses` | body `{image_id, method, params?, rendition?: "large"\|"full_res"}` → `VisionAnalysis`; cached by hash(image, method, rendition, params, algorithm version); 422 `invalid_request` for unknown method/params or out-of-range values |
+| GET | `/api/vision/analyses/{id}` | stored analysis (404 `analysis_not_found`) |
+| GET | `/api/vision/analyses/{id}/layers/{name}.png` | RGBA overlay, same size as the analysed rendition |
+| GET | `/api/vision/analyses/{id}/evaluation` | precision/recall/F1 vs. the image's annotations (422 if the method has no detections) |
+| GET/POST | `/api/images/{id}/annotations` | list / add `{x, y, label: "rock"}` (201) |
+| DELETE | `/api/annotations/{id}` | 204; 404 `annotation_not_found` |
+| POST | `/api/vision/match` | `{image_a, image_b}` → keypoints, ratio-test matches, RANSAC inliers, pixel disparity stats, ≤300 drawn matches, `stereo_pair` flag |
+| POST | `/api/vision/benchmark` | `{cameras?, limit ≤ 80}` → per-detector runtime/candidates summaries, agreement F1, precision/recall on annotated images |
+
+```jsonc
+// VisionAnalysis
+{ "id": "6ed3c597…", "image_id": "…", "method": "rocks_blob", "title": "…", "method_kind": "algorithmic",
+  "provenance": "derived", "rendition": "large", "params": { …resolved… }, "algorithm_version": "1",
+  "width": 1200, "height": 896, "timings_ms": { "dog_scale_space": 149.5 },
+  "stats": { "candidates": 9, "score_median": 1.1, "capped": "yes - strongest 300 kept"? },
+  "detections": [ { "x": 412.3, "y": 288.0, "r": 11.2, "score": 1.42, "area_px": 394.1 } ] | null,
+  "layers": [ { "name": "edges", "label": "…", "url": "/api/vision/analyses/…/layers/edges.png" } ],
+  "score_definition": "…" | null, "limitations": ["…"], "created_at": "…Z" }
+```

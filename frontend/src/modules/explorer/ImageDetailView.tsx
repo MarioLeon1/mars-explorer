@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, type ImageFilters } from '../../api/client'
 import type { ImageSummary } from '../../api/types'
 import { useApi } from '../../api/useApi'
@@ -86,6 +87,9 @@ export function ImageDetailView({ imageId, filters, dataVersion, onBack, onNavig
             <span className="xd__cam">Loading…</span>
           )}
         </div>
+        <Link className="xd__perception" to={`/perception/${encodeURIComponent(imageId)}`}>
+          Analyze in Perception
+        </Link>
         <div className="xd__nav">
           <span className="mono xd__pos">
             {nb?.position ? `${nb.position} / ${nb.total}` : nb ? `outside filter · ${nb.total}` : ''}

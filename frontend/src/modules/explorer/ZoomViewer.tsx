@@ -15,6 +15,8 @@ export interface ViewerLayer {
   alt: string
   /** Hide the left part of this layer (0–100 %) — used by swipe comparison. */
   clipLeftPercent?: number
+  /** 0–1, default 1 */
+  opacity?: number
 }
 
 interface ZoomViewerProps {
@@ -25,7 +27,19 @@ interface ZoomViewerProps {
   children?: ReactNode
   label?: string
   onNaturalSize?: (size: Size) => void
+  /**
+   * Vector overlay drawn in IMAGE pixel coordinates of the first layer (it zooms and pans with
+   * the image). `scale` = screen px per image px, to keep markers a constant on-screen size.
+   */
+  overlay?: (natural: Size, scale: number) => ReactNode
+  /** Click (not drag) on the image, in fractions of the first layer's width/height. */
+  onImageClick?: (x: number, y: number) => void
+  /** Cursor style hint while clicking does something (e.g. annotating). */
+  clickMode?: boolean
 }
+
+/** Pointer travel (px) below which a press counts as a click rather than a pan. */
+const CLICK_SLOP = 4
 
 const WHEEL_STEP = 1.0015
 const BUTTON_STEP = 1.6
@@ -46,11 +60,21 @@ function useElementSize(ref: RefObject<HTMLElement | null>): Size {
   return size
 }
 
-export function ZoomViewer({ layers, view, onViewChange, children, label, onNaturalSize }: ZoomViewerProps) {
+export function ZoomViewer({
+  layers,
+  view,
+  onViewChange,
+  children,
+  label,
+  onNaturalSize,
+  overlay,
+  onImageClick,
+  clickMode,
+}: ZoomViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const container = useElementSize(containerRef)
   const [naturals, setNaturals] = useState<Record<string, Size>>({})
-  const drag = useRef<{ x: number; y: number; id: number } | null>(null)
+  const drag = useRef<{ x: number; y: number; id: number; travel: number } | null>(null)
 
   const reference = layers[0] ? naturals[layers[0].src] : undefined
   const ready = reference !== undefined && container.width > 0 && container.height > 0
@@ -86,16 +110,29 @@ export function ZoomViewer({ layers, view, onViewChange, children, label, onNatu
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || (event.target as HTMLElement).closest('[data-no-pan]')) return
-    drag.current = { x: event.clientX, y: event.clientY, id: event.pointerId }
+    drag.current = { x: event.clientX, y: event.clientY, id: event.pointerId, travel: 0 }
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const start = drag.current
     if (!start || start.id !== event.pointerId || !reference) return
-    onViewChange(panBy(view, event.clientX - start.x, event.clientY - start.y, reference, container))
-    drag.current = { ...start, x: event.clientX, y: event.clientY }
+    const dx = event.clientX - start.x
+    const dy = event.clientY - start.y
+    const travel = start.travel + Math.hypot(dx, dy)
+    if (travel > CLICK_SLOP) onViewChange(panBy(view, dx, dy, reference, container))
+    drag.current = { ...start, x: event.clientX, y: event.clientY, travel }
   }
-  const endDrag = () => {
+  const endDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const start = drag.current
+    drag.current = null
+    if (!start || start.travel > CLICK_SLOP || !onImageClick || !reference || !containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const t = toTransform(view, reference, container)
+    const x = (event.clientX - rect.left - t.x) / t.scale / reference.width
+    const y = (event.clientY - rect.top - t.y) / t.scale / reference.height
+    if (x >= 0 && x <= 1 && y >= 0 && y <= 1) onImageClick(x, y)
+  }
+  const cancelDrag = () => {
     drag.current = null
   }
 
@@ -131,7 +168,7 @@ export function ZoomViewer({ layers, view, onViewChange, children, label, onNatu
     <div className="zv">
       <div
         ref={containerRef}
-        className={`zv__stage${view.zoom > 1 ? ' is-zoomed' : ''}`}
+        className={`zv__stage${view.zoom > 1 ? ' is-zoomed' : ''}${clickMode ? ' is-click-mode' : ''}`}
         tabIndex={0}
         role="group"
         aria-roledescription="zoomable image"
@@ -139,7 +176,7 @@ export function ZoomViewer({ layers, view, onViewChange, children, label, onNatu
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onPointerCancel={cancelDrag}
         onDoubleClick={() => onViewChange(FIT)}
         onKeyDown={onKeyDown}
       >
@@ -159,6 +196,7 @@ export function ZoomViewer({ layers, view, onViewChange, children, label, onNatu
                 visibility: transform ? 'visible' : 'hidden',
                 transform: transform ? `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` : undefined,
                 clipPath: layer.clipLeftPercent ? `inset(0 0 0 ${layer.clipLeftPercent}%)` : undefined,
+                opacity: layer.opacity,
               }}
               onLoad={(event) => {
                 const size = { width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight }
@@ -168,6 +206,21 @@ export function ZoomViewer({ layers, view, onViewChange, children, label, onNatu
             />
           )
         })}
+        {ready && overlay && (() => {
+          const t = toTransform(view, reference, container)
+          return (
+            <svg
+              className="zv__overlay"
+              width={reference.width}
+              height={reference.height}
+              viewBox={`0 0 ${reference.width} ${reference.height}`}
+              style={{ transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})` }}
+              aria-hidden="true"
+            >
+              {overlay(reference, t.scale)}
+            </svg>
+          )
+        })()}
         {!ready && <div className="zv__loading" aria-hidden="true" />}
         {children}
       </div>

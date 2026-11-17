@@ -11,7 +11,8 @@ The user is the project owner (CS background, new to robotics/planetary science)
   - `db/` SQLModel tables + session
   - `ingest/` NASA clients (raw-images feed, MMGIS waypoints), downloader, CLI `mars-ingest`
   - `api/` FastAPI app + routers (contract: `docs/api/contract-v1.md`)
-  - later: `vision/`, `terrain/`, `navigation/`, `replay/`, `assistant/`
+  - `vision/` classical CV: method registry (`methods.py`), detectors, texture, ORB matching, evaluation, benchmark CLI `mars-vision`
+  - later: `terrain/`, `navigation/`, `replay/`, `assistant/`
 - `frontend/` — Vite + React 19 + TypeScript. `src/design-system/` (tokens, primitives), `src/modules/<module>/`, `src/api/` (typed client mirroring the contract). Vite proxies `/api` → `127.0.0.1:8000`.
 - `data/` — local only (gitignored): `mars.db`, `images/`, later `terrain/`.
 - `docs/` — `SETUP.md` (step-by-step guide), `ARCHITECTURE.md`, `api/`, `research/`.
@@ -24,6 +25,7 @@ uv run pytest                             # unit+integration tests (offline)
 uv run pytest -m live                     # opt-in tests against real NASA endpoints
 uv run ruff check . ; uv run ruff format .
 uv run mars-ingest seed                   # download curated real image set + waypoints
+uv run mars-vision benchmark              # perception benchmark -> docs/benchmarks/
 uv run uvicorn mars_explorer.api.app:app --reload --port 8000
 # frontend (run inside frontend/)
 npm install ; npm run dev ; npm test ; npm run build ; npm run lint
@@ -61,6 +63,9 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
 - Stereo partner id = swap eye letter (`NLG_`↔`NRG_`, `ZL0_`↔`ZR0_`); not always published → verify before calling it a pair.
 - Not every sol has every camera (sol 1200: 0 Navcam, 84 others). Check `/api/feed/availability` first.
 - Background ingest: one worker thread (`ingest/jobs.py`); job state in memory, durable record in `ingest_runs`.
+- CV: see `.claude/skills/computer-vision` + `docs/perception.md`. Bump `vision.ALGORITHM_VERSION` when an algorithm changes (analysis cache key).
+- Windows console is cp1252: CLI output must stay ASCII (files are UTF-8).
+- `.visually-hidden` must keep `top/left: 0` or hidden text stretches the document.
 
 ## Status
 - Phase 0 (env, repo, skeleton) — done 2026-11-16.
@@ -68,4 +73,6 @@ npm install ; npm run dev ; npm test ; npm run build ; npm run lint
   Backend 47 tests + 3 live; frontend 28 tests; `scripts/check.ps1` green.
 - Phase 2 (Explorer, contract v1.1, background ingest jobs) — done 2026-11-16.
   Backend 62 tests + 3 live; frontend 47 tests.
-- Next: Phase 3 Perception (OpenCV pipeline, obstacle candidates, method-labelled results).
+- Phase 3 (Perception, contract v1.2, annotations + evaluation, benchmark) — done 2026-11-17.
+  Backend 88 tests + 3 live; frontend 55 tests.
+- Next: Phase 4 Terrain & Navigation (PLACES 1 m DEM tiles, slope/roughness cost maps, A*/Dijkstra/Theta*/RRT*).

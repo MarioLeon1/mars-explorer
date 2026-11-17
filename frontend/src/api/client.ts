@@ -1,5 +1,12 @@
 import type {
+  Annotation,
   ApiErrorBody,
+  Benchmark,
+  Evaluation,
+  MatchResult,
+  ParamValue,
+  VisionAnalysis,
+  VisionMethod,
   CameraWithCount,
   FeedAvailability,
   ImageDetail,
@@ -43,7 +50,7 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
 
 interface RequestOptions {
   signal?: AbortSignal
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'DELETE'
   body?: unknown
 }
 
@@ -88,6 +95,7 @@ export async function request<T>(path: string, signalOrOptions?: AbortSignal | R
       unreachable ? 'Cannot reach the Mars Explorer API.' : `HTTP ${response.status}`,
     )
   }
+  if (response.status === 204) return undefined as T
   if (body === null) {
     throw new ApiError(response.status, 'invalid_response', 'The API returned an empty or non-JSON body.')
   }
@@ -159,4 +167,21 @@ export const api = {
   },
   createJob: (body: IngestJobRequest) => request<IngestJob>('/api/ingest/jobs', { method: 'POST', body }),
   jobs: (signal?: AbortSignal) => request<IngestJob[]>('/api/ingest/jobs', signal),
+  visionMethods: (signal?: AbortSignal) => request<VisionMethod[]>('/api/vision/methods', signal),
+  analyze: (imageId: string, method: string, params: Record<string, ParamValue>) =>
+    request<VisionAnalysis>('/api/vision/analyses', {
+      method: 'POST',
+      body: { image_id: imageId, method, params, rendition: 'large' },
+    }),
+  evaluation: (analysisId: string, signal?: AbortSignal) =>
+    request<Evaluation>(`/api/vision/analyses/${encodeURIComponent(analysisId)}/evaluation`, signal),
+  annotations: (imageId: string, signal?: AbortSignal) =>
+    request<Annotation[]>(`${imagePath(imageId)}/annotations`, signal),
+  addAnnotation: (imageId: string, x: number, y: number) =>
+    request<Annotation>(`${imagePath(imageId)}/annotations`, { method: 'POST', body: { x, y, label: 'rock' } }),
+  deleteAnnotation: (id: number) => request<void>(`/api/annotations/${id}`, { method: 'DELETE' }),
+  match: (imageA: string, imageB: string) =>
+    request<MatchResult>('/api/vision/match', { method: 'POST', body: { image_a: imageA, image_b: imageB } }),
+  benchmark: (cameras: string[], limit: number) =>
+    request<Benchmark>('/api/vision/benchmark', { method: 'POST', body: { cameras, limit } }),
 }
